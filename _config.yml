@@ -99,11 +99,11 @@ author:
   avatar           : "444.png" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
   bio              : "Korean student/major in mathematics, and computer science. And costume player. Like Kureha in SDVX."
   location         : "Daejeon"
-  email            : #"riyuna0427@gmail.com"
+  email            : "riyuna0427@gmail.com"
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
-      url: "riyuna0427@gmail.com"
+      url: #"riyuna0427@gmail.com"
     - label: "Website"
       icon: "fas fa-fw fa-link"
       url: "https://riyuna.tistory.com/"
