@@ -12,7 +12,7 @@
 
 # theme                  : "minimal-mistakes-jekyll"
 # remote_theme           : "mmistakes/minimal-mistakes"
-minimal_mistakes_skin    : "default" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
+minimal_mistakes_skin    : "dark" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 remote_theme : mmistakes/minimal-mistakes
 
@@ -96,10 +96,10 @@ analytics:
 # Site Author
 author:
   name             : "Riyuna"
-  avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  avatar           : "444.png" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
   bio              : "Korean student/major in mathematics, and computer science. And costume player. Like Kureha in SDVX."
   location         : "Daejeon"
-  email            : "riyuna0427@gmail.com"
+  email            : #"riyuna0427@gmail.com"
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
