@@ -18,7 +18,7 @@ remote_theme : mmistakes/minimal-mistakes
 
 # Site Settings
 locale                   : "en-US"
-title                    : "Site Title"
+title                    : "kureha.moe"
 title_separator          : "-"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "Riyuna "
@@ -95,43 +95,43 @@ analytics:
 
 # Site Author
 author:
-  name             : "Your Name"
+  name             : "Riyuna"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "I am an **amazing** person."
-  location         : "Somewhere"
-  email            :
+  bio              : "Korean student/major in mathematics, and computer science. And costume player. Like Kureha in SDVX."
+  location         : "Daejeon"
+  email            : "riyuna0427@gmail.com"
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
-      # url: "mailto:your.name@email.com"
+      url: "riyuna0427@gmail.com"
     - label: "Website"
       icon: "fas fa-fw fa-link"
-      # url: "https://your-website.com"
+      url: "https://riyuna.tistory.com/"
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
-      # url: "https://twitter.com/"
+      url: "https://twitter.com/riyuna_main"
     - label: "Facebook"
       icon: "fab fa-fw fa-facebook-square"
-      # url: "https://facebook.com/"
+      url: "https://facebook.com/runnie0427/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      # url: "https://github.com/"
+      url: "https://github.com/riyuna/"
     - label: "Instagram"
       icon: "fab fa-fw fa-instagram"
-      # url: "https://instagram.com/"
+      url: "https://instagram.com/riyuna_cosp/"
 
 # Site Footer
 footer:
   links:
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
-      # url:
+      url: "https://twitter.com/riyuna_main"
     - label: "Facebook"
       icon: "fab fa-fw fa-facebook-square"
-      # url:
+      url: "https://facebook.com/runnie0427/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      # url:
+      url: "https://github.com/riyuna/"
     - label: "GitLab"
       icon: "fab fa-fw fa-gitlab"
       # url:
@@ -140,7 +140,7 @@ footer:
       # url:
     - label: "Instagram"
       icon: "fab fa-fw fa-instagram"
-      # url:
+      url: "https://instagram.com/riyuna_cosp/"
 
 
 # Reading Files
