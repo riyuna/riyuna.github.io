@@ -96,8 +96,8 @@ analytics:
 # Site Author
 author:
   name             : "Riyuna"
-  avatar           : "444.png" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "Image drawn by @simon_castella in Twitter.\nKorean student/major in mathematics, and computer science."
+  avatar           : "owner-2.png" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  bio              : "Image drawn by @sinrei_daiuchuu in Twitter.\nKorean student/major in mathematics, and computer science."
   location         : "Yuseong-Gu, Daejeon, South Korea"
   email            : "eunha.stardust@gmail.com"
   links:
