@@ -283,3 +283,9 @@ defaults:
       related: true
 
 theme: jekyll-theme-slate
+
+#language
+languages: ['ja', 'ko', 'en']
+default_lang: 'ko'
+exclude_from_localization: ['javascript', 'images', 'css']
+parallel_localization: false
