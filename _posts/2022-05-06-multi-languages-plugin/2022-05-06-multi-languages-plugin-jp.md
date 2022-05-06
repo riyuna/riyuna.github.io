@@ -61,7 +61,7 @@ KONAMI社のBEMANIシリーズアーケードゲームを主に楽しんでい�
 
 **<span style="color:magenta">SDVX</span>** VF 20.106
 
-**<span style="color:orange">pop'n</span>** 팝클래스 97.32, 49레벨 82%
+**<span style="color:orange">pop'n</span>** ポップンクラス 97.32, 49 82%
 
 IIDX SP 十段
 
