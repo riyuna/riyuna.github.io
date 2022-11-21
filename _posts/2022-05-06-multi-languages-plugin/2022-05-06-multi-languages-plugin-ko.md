@@ -41,11 +41,12 @@ KAIST 전산학부 복수전공(2018-)
 
 ------
 
-**2019 ACM-ICPC Seoul regional Contest** 7th place / team 13th
+**2022 ACM-ICPC Seoul regional Contest** 7th place
+**2019 ACM-ICPC Seoul regional Contest** 13th place
 
 UCPC 2020 30th
-
-UCPC 2021 42th
+UCPC 2021 42nd
+UCPC 2022 34th
 
 KOI 2017 예선 대상, 본선 동상
 
@@ -59,9 +60,9 @@ KOI 2017 예선 대상, 본선 동상
 
 KONAMI 사의 BEMANI 시리즈 아케이드 게임을 주로 즐겨합니다. 
 
-**<span style="color:magenta">SDVX</span>** VF 20.106
+**<span style="color:magenta">SDVX</span>** VF 20.561
 
-**<span style="color:orange">pop'n</span>** 팝클래스 97.32, 49레벨 82%
+**<span style="color:orange">pop'n</span>** 팝클래스 97.5n, 49레벨 85%
 
 IIDX SP 十段
 
@@ -71,7 +72,7 @@ BMS ★04 / -
 
 ## 기타
 
-<span style="color:orange">Maplestory</span> 2003-, Lv 250 아델 "나게키"
+<span style="color:orange">Maplestory</span> 2003-, Lv 260 아델 "나게키"
 
 Costume playing 2017-
 
