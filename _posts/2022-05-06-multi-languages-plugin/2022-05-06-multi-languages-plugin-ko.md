@@ -42,6 +42,7 @@ KAIST 전산학부 복수전공(2018-)
 ------
 
 **2022 ACM-ICPC Seoul regional Contest** 7th place
+
 **2019 ACM-ICPC Seoul regional Contest** 13th place
 
 UCPC 2020 30th
