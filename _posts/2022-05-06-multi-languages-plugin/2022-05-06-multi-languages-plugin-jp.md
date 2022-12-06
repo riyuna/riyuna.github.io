@@ -6,9 +6,9 @@ categories: MAIN
 
 ---
 
-![owner](/owner-2.png)
+![owner](/owner.jpg)
 
-アイコンはTwitterの　@sinrei_daiuchuu様が描いてくれました。 
+アイコンはTwitterの@Dawn_AIO様が描いてくれました。 
 
 # 概要
 
