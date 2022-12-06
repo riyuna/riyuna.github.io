@@ -6,9 +6,9 @@ categories: MAIN
 
 ---
 
-![owner](/owner-2.png)
+![owner](/owner.jpg)
 
-The image was drawn by @sinrei_daiuchu on Twitter. 
+The image was drawn by @Dawn_AIO on Twitter. 
 
 # Starting
 
