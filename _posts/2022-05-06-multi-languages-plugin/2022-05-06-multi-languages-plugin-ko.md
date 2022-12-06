@@ -6,9 +6,9 @@ categories: MAIN
 
 ---
 
-![owner](/owner-2.png)
+![owner](/owner.jpg)
 
-이미지는 트위터의 @sinrei_daiuchuu님이 그려 주었습니다. 
+이미지는 트위터의 @Dawn_AIO님이 그려 주었습니다. 
 
 # 들어가며
 
