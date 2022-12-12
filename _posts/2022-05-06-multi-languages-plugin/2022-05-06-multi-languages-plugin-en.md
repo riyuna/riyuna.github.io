@@ -35,17 +35,20 @@ It's currently private.
 -------
 
 KAIST Department of Mathematical Sciences (2018-)
+
 KAIST School of Computing Double Major (2018-)
 
 **Awards**
 
 ------
 
-**2019 ACM-ICPC Seoul regional Contest** 7th place / team 13th
+**2022 ACM-ICPC Seoul regional Contest** 7th place
+
+**2019 ACM-ICPC Seoul regional Contest** 13th place
 
 UCPC 2020 30th
 
-UCPC 2021 42th
+UCPC 2021 42nd
 
 KOI 2017 Qualification Grand Prize, Bronze Prize in the finals
 
@@ -59,9 +62,9 @@ KOI 2017 Qualification Grand Prize, Bronze Prize in the finals
 
 Usually enjoy KONAMI's BEMANI series arcade games. 
 
-**<span style="color:magenta">SDVX</span>** VF 20.106
+**<span style="color:magenta">SDVX</span>** VF 20.561
 
-**<span style="color:orange">pop'n</span>** pop'n class 97.32, 49lv 82%
+**<span style="color:orange">pop'n</span>** pop'n class 97.5x, 49lv 85%
 
 IIDX SP 十段
 
@@ -71,7 +74,7 @@ BMS ★04 / -
 
 ## Other
 
-<span style="color:orange">Maplestory</span> 2003-, Lv 250 Adel
+<span style="color:orange">Maplestory</span> 2003-, Lv 260 Adel
 
 Costume playing 2017-
 
