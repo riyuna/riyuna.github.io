@@ -62,7 +62,7 @@ KOI 2017 예선 대상, 본선 동상
 
 KONAMI 사의 BEMANI 시리즈 아케이드 게임을 주로 즐겨합니다. 
 
-**<span style="color:magenta">SDVX</span>** VF 20.561
+**<span style="color:magenta">SDVX</span>** VF 20.796
 
 **<span style="color:orange">pop'n</span>** 팝클래스 97.5n, 49레벨 85%
 
@@ -74,7 +74,7 @@ BMS ★04 / -
 
 ## 기타
 
-<span style="color:orange">Maplestory</span> 2003-, Lv 260 아델 "나게키"
+<span style="color:orange">Maplestory</span> 2003-, Lv 268 아델 "메구무"
 
 Costume playing 2017-
 
