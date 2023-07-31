@@ -62,7 +62,7 @@ KOI 2017 予選大賞、本選銅賞
 
 KONAMI社のBEMANIシリーズアーケードゲームを主に楽しんでいます。
 
-**<span style="color:magenta">SDVX</span>** VF 20.561
+**<span style="color:magenta">SDVX</span>** VF 20.796
 
 **<span style="color:orange">pop'n</span>** ポップンクラス 97.5x, 49 85%
 
