@@ -62,7 +62,7 @@ KOI 2017 Qualification Grand Prize, Bronze Prize in the finals
 
 Usually enjoy KONAMI's BEMANI series arcade games. 
 
-**<span style="color:magenta">SDVX</span>** VF 20.561
+**<span style="color:magenta">SDVX</span>** VF 20.796
 
 **<span style="color:orange">pop'n</span>** pop'n class 97.5x, 49lv 85%
 
