@@ -52,7 +52,7 @@ UCPC 2021 42th
 
 KOI 2017 予選大賞、本選銅賞
 
-[Baekjoon Online Judge](https://www.acmicpc.net/user/runnie0427) over 1700 solve, [solved.ac](https://solved.ac/profile/runnie0427) tier <span style="color:skyblue">Diamond 2</span>
+[Baekjoon Online Judge](https://www.acmicpc.net/user/runnie0427) over 1900 solve, [solved.ac](https://solved.ac/profile/runnie0427) tier <span style="color:skyblue">Diamond 1</span>
 
 [codeforces](https://codeforces.com/profile/Eunha) <span style="color:orange">Orange</span>, Maximum tier 2224.
 
@@ -62,7 +62,7 @@ KOI 2017 予選大賞、本選銅賞
 
 KONAMI社のBEMANIシリーズアーケードゲームを主に楽しんでいます。
 
-**<span style="color:magenta">SDVX</span>** VF 20.796
+**<span style="color:magenta">SDVX</span>** VF 20.8xx
 
 **<span style="color:orange">pop'n</span>** ポップンクラス 97.5x, 49 85%
 
@@ -74,7 +74,7 @@ BMS ★04 / -
 
 ## その他
 
-<span style="color:orange">Maplestory</span> 2003-, Lv 260 アデル
+<span style="color:orange">Maplestory</span> 2003-, Lv 275 アデル
 
 Costume playing 2017-
 
