@@ -52,7 +52,7 @@ UCPC 2021 42nd
 
 KOI 2017 Qualification Grand Prize, Bronze Prize in the finals
 
-[Baekjoon Online Judge](https://www.acmicpc.net/user/runnie0427) over 1700 solve, [solved.ac](https://solved.ac/profile/runnie0427) tier <span style="color:skyblue">Diamond 2</span>
+[Baekjoon Online Judge](https://www.acmicpc.net/user/runnie0427) over 1900 solve, [solved.ac](https://solved.ac/profile/runnie0427) tier <span style="color:skyblue">Diamond 1</span>
 
 [codeforces](https://codeforces.com/profile/Eunha) <span style="color:orange">Orange</span>, Maximum tier 2224.
 
@@ -62,7 +62,7 @@ KOI 2017 Qualification Grand Prize, Bronze Prize in the finals
 
 Usually enjoy KONAMI's BEMANI series arcade games. 
 
-**<span style="color:magenta">SDVX</span>** VF 20.796
+**<span style="color:magenta">SDVX</span>** VF 20.8xx
 
 **<span style="color:orange">pop'n</span>** pop'n class 97.5x, 49lv 85%
 
@@ -74,7 +74,7 @@ BMS ★04 / -
 
 ## Other
 
-<span style="color:orange">Maplestory</span> 2003-, Lv 260 Adel
+<span style="color:orange">Maplestory</span> 2003-, Lv 275 Adel
 
 Costume playing 2017-
 
