@@ -52,7 +52,7 @@ UCPC 2022 34th
 
 KOI 2017 예선 대상, 본선 동상
 
-[Baekjoon Online Judge](https://www.acmicpc.net/user/runnie0427) over 1700 solve, [solved.ac](https://solved.ac/profile/runnie0427) tier <span style="color:skyblue">Diamond 2</span>
+[Baekjoon Online Judge](https://www.acmicpc.net/user/runnie0427) over 1900 solve, [solved.ac](https://solved.ac/profile/runnie0427) tier <span style="color:skyblue">Diamond 1</span>
 
 [codeforces](https://codeforces.com/profile/Eunha) <span style="color:orange">Orange</span>, Maximum tier 2224.
 
@@ -62,7 +62,7 @@ KOI 2017 예선 대상, 본선 동상
 
 KONAMI 사의 BEMANI 시리즈 아케이드 게임을 주로 즐겨합니다. 
 
-**<span style="color:magenta">SDVX</span>** VF 20.796
+**<span style="color:magenta">SDVX</span>** VF 20.8xx
 
 **<span style="color:orange">pop'n</span>** 팝클래스 97.5n, 49레벨 85%
 
@@ -74,7 +74,7 @@ BMS ★04 / -
 
 ## 기타
 
-<span style="color:orange">Maplestory</span> 2003-, Lv 268 아델 "메구무"
+<span style="color:orange">Maplestory</span> 2003-, 엘리시움 Lv 275 아델 "맑은봄"
 
 Costume playing 2017-
 
