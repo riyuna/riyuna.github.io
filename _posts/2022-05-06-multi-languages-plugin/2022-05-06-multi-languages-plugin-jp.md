@@ -41,6 +41,7 @@ KAIST 電算学部複数専攻（2018-）
 **受賞歴および履歴**
 
 ------
+**2023 ACM-ICPC Seoul regional Contest** 4th place
 
 **2022 ACM-ICPC Seoul regional Contest** 7th place
 
@@ -73,8 +74,6 @@ BMS ★04 / -
 
 
 ## その他
-
-<span style="color:orange">Maplestory</span> 2003-, Lv 275 アデル
 
 Costume playing 2017-
 
