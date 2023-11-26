@@ -41,9 +41,8 @@ KAIST School of Computing Double Major (2018-)
 **Awards**
 
 ------
-
+**2023 ACM-ICPC Seoul regional Contest** 4th place
 **2022 ACM-ICPC Seoul regional Contest** 7th place
-
 **2019 ACM-ICPC Seoul regional Contest** 13th place
 
 UCPC 2020 30th
@@ -73,8 +72,6 @@ BMS ★04 / -
 
 
 ## Other
-
-<span style="color:orange">Maplestory</span> 2003-, Lv 275 Adel
 
 Costume playing 2017-
 
