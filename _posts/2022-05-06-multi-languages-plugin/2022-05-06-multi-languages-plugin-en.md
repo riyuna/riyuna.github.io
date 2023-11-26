@@ -42,7 +42,9 @@ KAIST School of Computing Double Major (2018-)
 
 ------
 **2023 ACM-ICPC Seoul regional Contest** 4th place
+
 **2022 ACM-ICPC Seoul regional Contest** 7th place
+
 **2019 ACM-ICPC Seoul regional Contest** 13th place
 
 UCPC 2020 30th
