@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> 장안선 - Like Button</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.6/lottie.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        #wrap {
+       
+            width: 200px;
+            margin: 0 auto;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #wrap #like-button {
+            font-weight: bold;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 20px;
+            position: relative;
+            text-decoration: none;
+            color: #000;
+            /* 상대 위치로 설정 */
+        }
+
+        #wrap #animation {
+            width: 500px;
+            /* 애니메이션 크기 조정 */
+            height: 500px;
+            /* 애니메이션 크기 조정 */
+            margin-left: 10px;
+            /* 버튼과의 간격 */
+            display: none;
+            /* 클릭 시에만 보이도록 설정 */
+            position: absolute;
+            /* 절대 위치로 설정 */
+            top: 50%;
+            right: -300px;
+       
+            /* 버튼의 세로 중앙에 맞춤 */
+            transform: translateY(-50%);
+            /* 세로 중앙 정렬 */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wrap">
+        <a href="#" id="like-button">좋아요</button>
+            <div id="animation"></div>
+    </div>
+    <script>
+        // Lottie 애니메이션 로드 (로컬에서 like.json 사용)
+        var animation = lottie.loadAnimation({
+            container: document.getElementById('animation'), // 애니메이션을 표시할 DOM 요소
+            renderer: 'svg', // 렌더링 방식 (svg, canvas, html)
+            loop: false, // 애니메이션 반복 여부
+            autoplay: false, // 자동 재생 여부
+            path: './src/like.json' // 로컬에서 애니메이션 JSON 파일 경로
+        });
+
+        // 버튼 클릭 이벤트
+        document.getElementById('like-button').addEventListener('click', function () {
+            document.getElementById('animation').style.display = 'block'; // 애니메이션 보이기
+            animation.goToAndPlay(0, true); // 애니메이션을 처음부터 재생
+        });
+    </script>
+</body>
+
+</html>
