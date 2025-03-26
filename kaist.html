@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Animation</title>
+    <style>
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        path {
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+        path:nth-child(4) { animation-delay: 0s; }
+        path:nth-child(3) { animation-delay: 0.5s; }
+        path:nth-child(2) { animation-delay: 1s; }
+        path:nth-child(1) { animation-delay: 1.5s; }
+    </style>
+</head>
+<body>
+    <svg width="118" height="27" viewBox="0 0 118 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_1_768)">
+        <path d="M93.027 0V5.502H101.861V26.421H108.883V5.502H117.717V0H93.027Z" fill="#004C98"/>
+        <path d="M83.246 10.459H77.377C75.818 10.459 74.555 9.813 74.555 7.98C74.555 6.144 75.819 5.502 77.377 5.502H89.998V0H76.543C71.522 0 67.449 2.898 67.449 7.979C67.449 13.065 71.521 15.959 76.543 15.959H82.582C84.141 15.959 85.402 16.604 85.402 18.438C85.402 20.275 84.14 20.916 82.582 20.916H68.424V26.421H83.246C88.267 26.421 92.34 23.529 92.34 18.444C92.34 13.364 88.268 10.459 83.246 10.459Z" fill="#004C98"/>
+        <path d="M62.516 0H55.494V26.421H62.516V0Z" fill="#004C98"/>
+        <path d="M34.114 0L24.182 23.776L14.714 13.21L26.553 0H18.533L7.31299 12.542V0H0.291992V26.421H7.31299V13.878L18.533 26.421H30.215L38.257 6.495L44.096 21.146H34.813L37.017 26.421H53.437L42.398 0H34.114Z" fill="#004C98"/>
+        </g>
+        <defs>
+        <clipPath id="clip0_1_768">
+        <rect width="118" height="27" fill="white"/>
+        </clipPath>
+        </defs>
+        </svg>
+        
+</body>
+</html>
