@@ -3,36 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAIST 로고 애니메이션</title>
+    <link rel="stylesheet" href = "style.css"> 
+    <title>송은하 개인 홈페이지</title>
     <style>
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
+        /* 모바일 반응형 스타일 */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                background-color: #0056b3;
+                z-index: 999;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-links.show {
+                display: flex;
+            }
+            .logo {
+                height: 30px;
+            }
+
+            header {
+                font-size: 1.2rem;
+                padding: 8px 16px;
+            }
         }
-        path {
-            opacity: 0;
-            animation: fadeIn 1s forwards;
-        }
-        path:nth-child(4) { animation-delay: 0s; }
-        path:nth-child(3) { animation-delay: 0.5s; }
-        path:nth-child(2) { animation-delay: 1s; }
-        path:nth-child(1) { animation-delay: 1.5s; }
+
     </style>
+    <script>
+        function showCardContent(id) {
+            const allContents = document.querySelectorAll('.card-content');
+            allContents.forEach(el => el.classList.add('hidden'));  // 다 숨기고
+    
+            const target = document.getElementById(id);
+            if (target) {
+                target.classList.remove('hidden'); // 선택한 것만 보이게
+            }
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('.nav-links a[href^="#"]').forEach(link => {
+            link.addEventListener("click", function(e) {
+                const targetId = this.getAttribute("href").substring(1);
+                const content = document.getElementById(targetId);
+                
+                if (content && content.classList.contains("card-content")) {
+                    e.preventDefault(); // 기본 동작 방지
+                    showCardContent(targetId); // 카드 열기
+                    content.scrollIntoView({ behavior: "smooth" }); // 부드럽게 이동
+                }
+            });
+        });
+    });
+    function generateRandom() {
+        const min = parseInt(document.getElementById("min").value);
+        const max = parseInt(document.getElementById("max").value);
+
+        if (isNaN(min) || isNaN(max) || min > max) {
+            document.getElementById("result").textContent = "잘못된 범위입니다.";
+            return;
+        }
+
+        const random = Math.floor(Math.random() * (max - min + 1)) + min;
+        document.getElementById("result").textContent = `결과: ${random}`;
+    }
+    function toggleMenu() {
+        const navLinks = document.querySelector('.nav-links');
+        navLinks.classList.toggle('show');
+    }
+    </script>
+    
 </head>
 <body>
-    <svg width="118" height="27" viewBox="0 0 118 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g clip-path="url(#clip0_1_768)">
-        <path d="M93.027 0V5.502H101.861V26.421H108.883V5.502H117.717V0H93.027Z" fill="#004C98"/>
-        <path d="M83.246 10.459H77.377C75.818 10.459 74.555 9.813 74.555 7.98C74.555 6.144 75.819 5.502 77.377 5.502H89.998V0H76.543C71.522 0 67.449 2.898 67.449 7.979C67.449 13.065 71.521 15.959 76.543 15.959H82.582C84.141 15.959 85.402 16.604 85.402 18.438C85.402 20.275 84.14 20.916 82.582 20.916H68.424V26.421H83.246C88.267 26.421 92.34 23.529 92.34 18.444C92.34 13.364 88.268 10.459 83.246 10.459Z" fill="#004C98"/>
-        <path d="M62.516 0H55.494V26.421H62.516V0Z" fill="#004C98"/>
-        <path d="M34.114 0L24.182 23.776L14.714 13.21L26.553 0H18.533L7.31299 12.542V0H0.291992V26.421H7.31299V13.878L18.533 26.421H30.215L38.257 6.495L44.096 21.146H34.813L37.017 26.421H53.437L42.398 0H34.114Z" fill="#004C98"/>
-        </g>
-        <defs>
-        <clipPath id="clip0_1_768">
-        <rect width="118" height="27" fill="white"/>
-        </clipPath>
-        </defs>
-        </svg>
+    <header>
+        <img src = "logo.jpg" alt="로고" class="logo">
+        송은하 개인 홈페이지
+    </header>
+    <div class="nav-container">
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <nav class="nav-links">
+            <div class="dropdown">
+                <a href="#about">소개</a>
+                <div class="dropdown-content">
+                    <a href="#bio">자기소개</a>
+                    <a href="#resume">이력서</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <a href="#research">연구</a>
+                <div class="dropdown-content">
+                    <a href="#topics">연구 주제</a>
+                    <a href="#papers">논문 목록</a>
+                    <a href="#collaborators">공동 연구자</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <a href="#teaching">강의 및 자료</a>
+                <div class="dropdown-content">
+                    <a href="#materials">강의 자료</a>
+                    <a href="#courses">수업 정보</a>
+                    <a href="#references">추천 자료</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <a href="#blog">블로그</a>
+                <div class="dropdown-content">
+                    <a href="#academic">학문적 글</a>
+                    <a href="#gradlife">대학원 생활</a>
+                    <a href="#math">수학 개념</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <a href="#contact">연락처</a>
+                <div class="dropdown-content">
+                    <a href="#email">이메일</a>
+                    <a href="#social">SNS</a>
+                    <a href="#location">연구실 위치</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <a href="#extras">기타</a>
+                <div class="dropdown-content">
+                    <a href="#tools">툴</a>
+                    <div class="dropdown">
+                        <a href="#ps">PS</a>
+                        <div class="dropdown-content">
+                            <a href="#algorithms">알고리즘 정리</a>
+                            <a href="#solutions">문제 풀이</a>
+                            <a href="#judge">문제 채점</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <!-- HTML -->
+    <div class="container">
+        <section id = "home-section">
+            <h2>환영합니다!</h2>
+            <p>카이스트 수리과학과 석박통합 과정 송은하입니다. 이곳은 제가가 대학원생으로서의 연구, 강의, 그리고 기타 프로젝트와 개인 툴 등을 공유하는 개인 홈페이지입니다.</p>
+            <p><img { max-width: 100%; height: auto; } src="./images/yuri.jpg" alt="흰 백합 이미지"></p>    
+        </section> 
+        <section class="main-section" id="about">
+            <h2>소개</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>자기소개</h3>
+                    <p>송은하에 대해 간략히...</p>
+                    <div class="card-footer" onclick="showCardContent('bio')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>이력서</h3>
+                    <p>경력 및 학력 정보 보기</p>
+                    <div class="card-footer" onclick="showCardContent('resume')">더 보기</div>
+                </div>
+            </div>
         
+            <div class="card-content hidden" id="bio">
+                <h3>자기소개</h3>
+                <p>안녕하세요. KAIST 수리과학과 학부 18/석박통합 25 송은하입니다. 학부 때에는 전산학부도 복수전공했습니다.</p>
+            </div>
+            <div class="card-content hidden" id="resume">
+                <h3>이력서</h3>
+                <p><a href="https://kaist.ac.kr/" target="_blank">제 개인 페이지</a>를 참조해주세요.</p>
+            </div>
+        </section>
+        <section class="research-section" id="research">
+            <h2>연구</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>연구 주제</h3>
+                    <p>확률론 관련 연구를 진행 중입니다.</p>
+                    <div class="card-footer" onclick="showCardContent('topics')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>논문 목록</h3>
+                    <p>추후 채워질 예정입니다.</p>
+                    <div class="card-footer" onclick="showCardContent('papers')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>공동 연구자</h3>
+                    <p>추후 채워질 예정입니다.</p>
+                    <div class="card-footer" onclick="showCardContent('collaborators')">더 보기</div>
+                </div>
+            </div>
+        
+            <div class="card-content hidden" id="topics">
+                <h3>연구 주제</h3>
+                <p>확률론 관련 연구를 진행 중입니다.</p>
+            </div>
+            <div class="card-content hidden" id="papers">
+                <h3>논문 목록</h3>
+                <p>앞으로 잔뜩 채워나갈 것입니다.</p>
+            </div>
+            <div class="card-content hidden" id="collaborators">
+                <h3>공동 연구자</h3>
+                <p>앞으로 잔뜩 채워나갈 것입니다.</p>
+            </div>
+        </section>
+        <section class="teaching-section" id="teaching">
+            <h2>강의 및 자료</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>강의 자료</h3>
+                    <p>추가 예정</p>
+                    <div class="card-footer" onclick="showCardContent('materials')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>수업 정보</h3>
+                    <p>추가 예정</p>
+                    <div class="card-footer" onclick="showCardContent('courses')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>추천 자료</h3>
+                    <p>추가 예정</p>
+                    <div class="card-footer" onclick="showCardContent('references')">더 보기</div>
+                </div>
+            </div>
+
+            <div class="card-content hidden" id="materials">
+                <h3>강의 및 자료</h3>
+                <p>확률론 관련 연구를 진행 중입니다.</p>
+            </div>
+            <div class="card-content hidden" id="courses">
+                <h3>수업 정보</h3>
+                <p>선형대수학 개론 조교 활동 중.</p>
+            </div>
+            <div class="card-content hidden" id="references">
+                <h3>추천 자료</h3>
+                <p><a href="https://webtoon.kakao.com/content/%EB%A6%AC%EB%93%9C%EB%9E%98%ED%94%84%ED%8A%B8/3950?tab=episode" target="_blank">추천 웹툰</a></p>
+            </div>
+        </section>
+
+        <section class="blog-section" id="blog">
+            <h2>블로그</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>학문적 글</h3>
+                    <p>작성한 글들을 보실 수 있습니다.</p>
+                    <div class="card-footer" onclick="showCardContent('academic')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>대학원 생활</h3>
+                    <p>작성한 글들을 보실 수 있습니다.</p>
+                    <div class="card-footer" onclick="showCardContent('gradlife')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>수학 개념</h3>
+                    <p>작성한 글들을 보실 수 있습니다.</p>
+                    <div class="card-footer" onclick="showCardContent('math')">더 보기</div>
+                </div>
+            </div>
+
+            <div class="card-content hidden" id="academic">
+                <h3>학문적 글</h3>
+                <p>수학은 모든 이공계 분야의 근본이 됩니다. 확률론은 그 중에서 확률에 대해 연구하는 학문입니다.</p>
+            </div>
+            <div class="card-content hidden" id="gradlife">
+                <h3>대학원 생활</h3>
+                <p>사실 논문이 머리에 하나도 안 들어와요. 노력 중입니다.</p>
+            </div>
+            <div class="card-content hidden" id="math">
+                <h3>수학 개념</h3>
+                <p>6/2(1+2)의 답이 무엇일까요? 애시당초 식의 모호성이 문제입니다. 이런 문제 좀 내지 마세요.</p>
+            </div>
+        </section>
+
+        
+        <section class="contact-section" id="contact">
+            <h2>연락처</h2>
+            <div class="card-container">
+                <div class="card" id="email">
+                    <h3>이메일</h3>
+                    <p>eunha.song@kaist.ac.kr</p>
+                </div>
+                <div class="card">
+                    <h3>SNS</h3>
+                    <p>비공개입니다.</p>
+                </div>
+                <div class="card">
+                    <h3>연구실 위치</h3>
+                    <p>대전광역시 유성구 대학로 291 한국과학기술원</p>
+                </div>
+            </div>
+        </section>
+        <section class="extra-section" id="extras">
+            <h2>툴</h2>
+            <div class="card-container">
+                <div id="random-tool" style="
+                    bottom: 20px;
+                    right: 20px;
+                    background: #f8f9fa;
+                    border: 1px solid #ccc;
+                    padding: 1rem;
+                    border-radius: 10px;
+                    box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+                    font-family: sans-serif;
+                    z-index: 1000;
+                ">
+                    <h4 style="margin: 0 0 10px 0;">랜덤 정수 생성기</h4>
+                    <div style="margin-bottom: 10px;">
+                        <label>최소값: <input type="number" id="min" value="1" style="width: 60px;"></label>
+                        <label>최대값: <input type="number" id="max" value="100" style="width: 60px;"></label>
+                    </div>
+                    <button onclick="generateRandom()">생성</button>
+                    <p id="result" style="margin-top: 10px; font-weight: bold;"></p>
+                </div>
+            </div>
+            <h2>Problem Solving</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>알고리즘 정리</h3>
+                    <p>작성한 글들을 보실 수 있습니다.</p>
+                    <div class="card-footer" onclick="showCardContent('algorithms')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>문제 풀이</h3>
+                    <p>작성한 글들을 보실 수 있습니다.</p>
+                    <div class="card-footer" onclick="showCardContent('solutions')">더 보기</div>
+                </div>
+                <div class="card">
+                    <h3>문제 채점</h3>
+                    <p>작성한 글들을 보실 수 있습니다.</p>
+                    <div class="card-footer" onclick="showCardContent('judge')">더 보기</div>
+                </div>
+            </div>
+            <div class="card-content hidden" id="algorithms">
+                <h3>알고리즘 정리</h3>
+                <p>밀러-라빈 소수 판정법은 페르마 소정리를 이용해서 확률적으로 소수 판별을 하는 알고리즘입니다.</p>
+            </div>
+            <div class="card-content hidden" id="solutions">
+                <h3>문제 풀이</h3>
+                <p>BOJ의 <a href="https://boj.kr/8481" target="_blank">Generators</a>는 구현을 열심히 하면 풀 수 있습니다.</p>
+            </div>
+            <div class="card-content hidden" id="judge">
+                <h3>문제 채점</h3>
+                <p>준비중입니다.</p>
+            </div>
+        </section>
+
+
+        
+    </div>
+    <footer>
+        &copy; 2025 개인 홈페이지. 모든 권리 보유.
+    </footer>
+    <script>
+        function toggleMenu() {
+            const navLinks = document.querySelector('.nav-links');
+            navLinks.style.display = (navLinks.style.display === 'flex') ? 'none' : 'flex';
+        }
+    </script>
 </body>
 </html>
