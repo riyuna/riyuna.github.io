@@ -6,49 +6,47 @@
   <title>나린봇 명령어 안내</title>
   <style>
     :root {
-      --bg: #1a1a2e;
-      --surface: #16213e;
-      --card: #0f3460;
-      --accent: #e94560;
-      --text: #eaeaea;
-      --muted: #888;
-      --tier-g: #555;
-      --tier-c: #aaa;
-      --tier-b: #4caf50;
-      --tier-a: #2196f3;
-      --tier-s: #ffc107;
-      --tier-ss: #ff5722;
-      --tier-sss: #9c27b0;
+      --bg: #07111f;
+      --surface: #0d1f35;
+      --card: #112844;
+      --border: #1e3d5c;
+      --accent: #4da6ff;
+      --accent2: #7ec8ff;
+      --text: #e8f4ff;
+      --muted: #7aaac8;
+      --dim: #4a7a9b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
     header { background: var(--surface); border-bottom: 2px solid var(--accent); padding: 1.2rem 2rem; display: flex; align-items: center; gap: 1rem; }
-    header h1 { font-size: 1.5rem; }
+    header h1 { font-size: 1.5rem; color: var(--accent2); letter-spacing: 0.02em; }
     header span { color: var(--muted); font-size: 0.9rem; }
-    nav { background: var(--surface); padding: 0.5rem 2rem; display: flex; gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid #333; }
-    nav a { color: var(--text); text-decoration: none; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; transition: background 0.2s; }
-    nav a:hover { background: var(--card); }
+    nav { background: var(--surface); padding: 0.5rem 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+    nav a { color: var(--accent2); text-decoration: none; padding: 0.3rem 0.9rem; border-radius: 4px; font-size: 0.88rem; border: 1px solid transparent; transition: all 0.15s; }
+    nav a:hover { background: var(--card); border-color: var(--accent); color: #fff; }
     .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
     section { margin-bottom: 3rem; }
-    section h2 { font-size: 1.2rem; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-bottom: 1.2rem; }
-    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.8rem; }
-    .cmd-card { background: var(--surface); border: 1px solid #333; border-radius: 8px; padding: 0.9rem 1rem; }
+    section h2 { font-size: 1.1rem; color: var(--accent2); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.2rem; letter-spacing: 0.03em; }
+    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.7rem; }
+    .cmd-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem 1rem; transition: border-color 0.15s; }
+    .cmd-card:hover { border-color: var(--accent); }
     .cmd-card code { color: var(--accent); font-size: 0.95rem; font-weight: bold; }
-    .cmd-card p { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
-    .cmd-card .usage { color: #666; font-size: 0.78rem; margin-top: 0.2rem; font-style: italic; }
+    .cmd-card p { color: #b8d8f0; font-size: 0.85rem; margin-top: 0.3rem; }
+    .cmd-card .usage { color: var(--dim); font-size: 0.78rem; margin-top: 0.2rem; font-style: italic; }
     .tier-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .tier-table th, .tier-table td { padding: 0.6rem 1rem; border: 1px solid #333; text-align: center; }
-    .tier-table th { background: var(--card); }
-    .t-g  { color: var(--tier-g);   font-weight: bold; }
-    .t-c  { color: var(--tier-c);   font-weight: bold; }
-    .t-b  { color: var(--tier-b);   font-weight: bold; }
-    .t-a  { color: var(--tier-a);   font-weight: bold; }
-    .t-s  { color: var(--tier-s);   font-weight: bold; }
-    .t-ss { color: var(--tier-ss);  font-weight: bold; }
-    .t-sss{ color: var(--tier-sss); font-weight: bold; }
-    .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-left: 0.3rem; background: #333; }
-    .badge.owner { background: #5b2333; color: #f88; }
-    footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 2rem; border-top: 1px solid #333; }
+    .tier-table th, .tier-table td { padding: 0.6rem 1rem; border: 1px solid var(--border); text-align: center; }
+    .tier-table th { background: var(--card); color: var(--accent2); }
+    .tier-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+    .t-g  { color: #666;    font-weight: bold; }
+    .t-c  { color: #bbb;    font-weight: bold; }
+    .t-b  { color: #5cb85c; font-weight: bold; }
+    .t-a  { color: #4da6ff; font-weight: bold; }
+    .t-s  { color: #ffd700; font-weight: bold; }
+    .t-ss { color: #ff8c42; font-weight: bold; }
+    .t-sss{ color: #c77dff; font-weight: bold; }
+    .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-left: 0.3rem; background: var(--card); border: 1px solid var(--border); }
+    .badge.owner { background: #0d2d4d; border-color: var(--accent); color: var(--accent2); }
+    footer { text-align: center; color: var(--dim); font-size: 0.8rem; padding: 2rem; border-top: 1px solid var(--border); }
   </style>
 </head>
 <body>
