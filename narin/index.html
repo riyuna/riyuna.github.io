@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나린봇 명령어 안내</title>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --card: #0f3460;
+      --accent: #e94560;
+      --text: #eaeaea;
+      --muted: #888;
+      --tier-g: #555;
+      --tier-c: #aaa;
+      --tier-b: #4caf50;
+      --tier-a: #2196f3;
+      --tier-s: #ffc107;
+      --tier-ss: #ff5722;
+      --tier-sss: #9c27b0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
+    header { background: var(--surface); border-bottom: 2px solid var(--accent); padding: 1.2rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    header h1 { font-size: 1.5rem; }
+    header span { color: var(--muted); font-size: 0.9rem; }
+    nav { background: var(--surface); padding: 0.5rem 2rem; display: flex; gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid #333; }
+    nav a { color: var(--text); text-decoration: none; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; transition: background 0.2s; }
+    nav a:hover { background: var(--card); }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    section { margin-bottom: 3rem; }
+    section h2 { font-size: 1.2rem; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-bottom: 1.2rem; }
+    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.8rem; }
+    .cmd-card { background: var(--surface); border: 1px solid #333; border-radius: 8px; padding: 0.9rem 1rem; }
+    .cmd-card code { color: var(--accent); font-size: 0.95rem; font-weight: bold; }
+    .cmd-card p { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+    .cmd-card .usage { color: #666; font-size: 0.78rem; margin-top: 0.2rem; font-style: italic; }
+    .tier-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .tier-table th, .tier-table td { padding: 0.6rem 1rem; border: 1px solid #333; text-align: center; }
+    .tier-table th { background: var(--card); }
+    .t-g  { color: var(--tier-g);   font-weight: bold; }
+    .t-c  { color: var(--tier-c);   font-weight: bold; }
+    .t-b  { color: var(--tier-b);   font-weight: bold; }
+    .t-a  { color: var(--tier-a);   font-weight: bold; }
+    .t-s  { color: var(--tier-s);   font-weight: bold; }
+    .t-ss { color: var(--tier-ss);  font-weight: bold; }
+    .t-sss{ color: var(--tier-sss); font-weight: bold; }
+    .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-left: 0.3rem; background: #333; }
+    .badge.owner { background: #5b2333; color: #f88; }
+    footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 2rem; border-top: 1px solid #333; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>⚾ 나린봇</h1>
+    <span>KBO 야구 디스코드 봇 명령어 안내 · 명령어 prefix: <code style="color:var(--accent)">!</code></span>
+  </div>
+</header>
+<nav>
+  <a href="#basic">기본</a>
+  <a href="#kbo">선수/일정</a>
+  <a href="#predict">예측</a>
+  <a href="#gacha">뽑기/거래</a>
+  <a href="#battle">대결</a>
+  <a href="#fragment">조각</a>
+  <a href="#admin">관리자</a>
+</nav>
+
+<div class="container">
+
+  <!-- 기본 -->
+  <section id="basic">
+    <h2>기본 명령어</h2>
+    <div class="cmd-grid">
+      <div class="cmd-card"><code>!안녕</code><p>봇에게 인사</p></div>
+      <div class="cmd-card"><code>!잘자</code><p>봇에게 잘자라고 하기</p></div>
+      <div class="cmd-card"><code>!핑</code><p>봇 응답 속도 확인</p></div>
+      <div class="cmd-card"><code>!서버정보</code><p>현재 서버 정보 출력</p></div>
+      <div class="cmd-card"><code>!출석</code><p>하루 1회 100P 획득 (KST 06:00 초기화)</p></div>
+      <div class="cmd-card"><code>!포인트</code><p>내 포인트 확인</p><div class="usage">!포인트 @유저 / !포인트순위</div></div>
+    </div>
+  </section>
+
+  <!-- 선수/일정 -->
+  <section id="kbo">
+    <h2>KBO 선수 검색 · 일정</h2>
+    <div class="cmd-grid">
+      <div class="cmd-card"><code>!선수검색 [이름]</code><p>선수 기본정보 + 커리어 스탯</p></div>
+      <div class="cmd-card"><code>!일정 [날짜]</code><p>KBO 경기 일정 (생략 시 오늘)</p><div class="usage">날짜: 20260401 / 04/01 / 0401</div></div>
+      <div class="cmd-card"><code>!결과 [날짜]</code><p>KBO 경기 결과</p></div>
+      <div class="cmd-card"><code>!응원가 [선수명] [번호]</code><p>선수 응원가 조회</p></div>
+      <div class="cmd-card"><code>!응원가등록 [선수명] [내용]</code><p>응원가 등록</p></div>
+      <div class="cmd-card"><code>!응원가삭제 [선수명] [번호]</code><p>내가 등록한 응원가 삭제</p></div>
+      <div class="cmd-card"><code>!응원가목록</code><p>전체 응원가 목록</p></div>
+      <div class="cmd-card"><code>!그긴거</code><p>그 긴 거 조회</p></div>
+    </div>
+  </section>
+
+  <!-- 예측 -->
+  <section id="predict">
+    <h2>승부 예측 · AI 예측</h2>
+    <div class="cmd-grid">
+      <div class="cmd-card"><code>!승부예측</code><p>오늘 승부예측 현황 확인 및 참여</p></div>
+      <div class="cmd-card"><code>!예측 [번호] [팀명] [금액]</code><p>승부예측 베팅 (50~500P)</p><div class="usage">승리 2배 / 무승부 환불 / 패배 0.5배</div></div>
+      <div class="cmd-card"><code>!오늘예측</code><p>AI 야구 예측 조회 (승부 + 안타)</p></div>
+    </div>
+  </section>
+
+  <!-- 뽑기/거래 -->
+  <section id="gacha">
+    <h2>선수 뽑기 · 로스터 · 거래</h2>
+    <div class="cmd-grid">
+      <div class="cmd-card"><code>!선수뽑기 [횟수]</code><p>선수 카드 뽑기 (10P/회, 최대 10회)</p><div class="usage">처음 30회 무료</div></div>
+      <div class="cmd-card"><code>!10연</code><p>10연속 뽑기 단축키</p></div>
+      <div class="cmd-card"><code>!내선수 [팀명]</code><p>보유 선수 목록</p></div>
+      <div class="cmd-card"><code>!내선수ID [팀명]</code><p>카드 ID 포함 목록 (거래용)</p></div>
+      <div class="cmd-card"><code>!선수풀</code><p>전체 선수 풀 현황</p></div>
+      <div class="cmd-card"><code>!도감 [팀명] [투수/타자] [@유저]</code><p>선수 도감 (수집 현황)</p><div class="usage">예) !도감 삼성 투수</div></div>
+      <div class="cmd-card"><code>!로스터 [@유저]</code><p>가상 로스터 보기</p></div>
+      <div class="cmd-card"><code>!로스터배치 [슬롯] [선수명]</code><p>자유 로스터에 선수 배치</p></div>
+      <div class="cmd-card"><code>!로스터제거 [슬롯]</code><p>슬롯 비우기</p></div>
+      <div class="cmd-card"><code>!실전로스터 [@유저]</code><p>실전 로스터 보기</p></div>
+      <div class="cmd-card"><code>!실전로스터배치 [슬롯] [선수명]</code><p>실전 로스터 배치 (2026 KBO 등록 + 코스트 제한)</p></div>
+      <div class="cmd-card"><code>!거래제안 @유저 ...</code><p>1:1 카드/포인트 교환 제안</p><div class="usage">!거래제안 @유저 카드 [ID] 카드 [ID]</div></div>
+      <div class="cmd-card"><code>!거래목록</code><p>내 거래 목록</p></div>
+      <div class="cmd-card"><code>!거래수락 [ID]</code><p>거래 수락</p></div>
+      <div class="cmd-card"><code>!거래거절 [ID]</code><p>거래 거절</p></div>
+      <div class="cmd-card"><code>!거래취소 [ID]</code><p>내가 제안한 거래 취소</p></div>
+      <div class="cmd-card"><code>!선수선물 @유저 [선수ID]</code><p>카드 1장 선물</p></div>
+      <div class="cmd-card"><code>!선수강화 [선수명]</code><p>선수 카드 강화 (+1~+3강)</p><div class="usage">강화당 카드 5장 필요</div></div>
+    </div>
+  </section>
+
+  <!-- 조각 -->
+  <section id="fragment">
+    <h2>조각 시스템</h2>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">분해로 조각을 모아 원하는 선수와 교환. 교환은 티어별 월 1회 제한.</p>
+    <div class="cmd-grid" style="margin-bottom:1.5rem;">
+      <div class="cmd-card"><code>!조각 [@유저]</code><p>보유 조각 확인</p></div>
+      <div class="cmd-card"><code>!분해 [선수명] [장수]</code><p>중복 카드 분해 → 조각 획득</p></div>
+      <div class="cmd-card"><code>!조각교환 [선수명]</code><p>조각으로 원하는 선수 교환 (월 1회/티어)</p></div>
+      <div class="cmd-card"><code>!전체분해 [티어]</code><p>해당 티어 중복 카드 전체 분해 미리보기</p><div class="usage">예) !전체분해 C</div></div>
+      <div class="cmd-card"><code>!전체분해확인 [티어]</code><p>전체분해 최종 실행</p></div>
+      <div class="cmd-card"><code>!선수잠금 [선수명]</code><p>분해에서 보호</p></div>
+      <div class="cmd-card"><code>!선수잠금해제 [선수명]</code><p>잠금 해제</p></div>
+    </div>
+
+    <table class="tier-table">
+      <thead>
+        <tr><th>티어</th><th>코스트(WAR)</th><th>분해 조각</th><th>교환 필요 조각</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="t-g">G</td><td>1 (0미만)</td><td>1</td><td>100</td></tr>
+        <tr><td class="t-c">C</td><td>2 (0~0.99)</td><td>2</td><td>200</td></tr>
+        <tr><td class="t-b">B</td><td>3 (1~1.99)</td><td>3</td><td>300</td></tr>
+        <tr><td class="t-a">A</td><td>5 (2~2.99)</td><td>4</td><td>400</td></tr>
+        <tr><td class="t-s">S</td><td>8 (3~3.99)</td><td>5</td><td>500</td></tr>
+        <tr><td class="t-ss">SS</td><td>10 (4~6.49)</td><td>5</td><td>700</td></tr>
+        <tr><td class="t-sss">SSS</td><td>15 (6.5+)</td><td>5</td><td>1000</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 대결 -->
+  <section id="battle">
+    <h2>가상 야구 대결</h2>
+    <div class="cmd-grid">
+      <div class="cmd-card"><code>!대결 @상대 [포인트] [자유|실전]</code><p>대결 도전 제안</p><div class="usage">기본값: 자유대결</div></div>
+      <div class="cmd-card"><code>!대결수락</code><p>도전 수락</p></div>
+      <div class="cmd-card"><code>!대결거절</code><p>도전 거절</p></div>
+      <div class="cmd-card"><code>!대결진행 [타석|이닝|전체]</code><p>시뮬레이션 진행</p></div>
+      <div class="cmd-card"><code>!대결현황</code><p>현재 경기 점수판</p></div>
+      <div class="cmd-card"><code>!대결기록</code><p>최근 경기 전체 로그</p></div>
+      <div class="cmd-card"><code>!레이팅</code><p>내 ELO 레이팅 확인</p></div>
+      <div class="cmd-card"><code>!레이팅순위</code><p>레이팅 순위표</p></div>
+      <div class="cmd-card"><code>!배치고사</code><p>배치고사 30판 자동 진행 (실전대결 필수)</p></div>
+      <div class="cmd-card"><code>!배치현황</code><p>배치고사 진행 현황</p></div>
+      <div class="cmd-card"><code>!타순배치 [순번] [선수명]</code><p>타순 설정</p></div>
+      <div class="cmd-card"><code>!내타순 [@유저]</code><p>타순 확인</p></div>
+    </div>
+    <p style="color:var(--muted);font-size:0.83rem;margin-top:1rem;">실전대결: 배치고사 완료 필수 · 2026 KBO 등록 선수만 · 팀 코스트 100 이하</p>
+  </section>
+
+  <!-- 관리자 -->
+  <section id="admin">
+    <h2>관리자 전용 <span class="badge owner">봇 주인</span></h2>
+    <div class="cmd-grid">
+      <div class="cmd-card"><code>!포인트지급 @유저 [금액]</code><p>포인트 강제 지급</p></div>
+      <div class="cmd-card"><code>!로스터갱신 [연도]</code><p>전팀 선수 DB 갱신</p></div>
+      <div class="cmd-card"><code>!선수삭제 @유저 [환불P] [선수명]</code><p>선수 삭제 + 환불</p></div>
+      <div class="cmd-card"><code>!배치초기화</code><p>AI ELO 초기화 + 시드</p></div>
+      <div class="cmd-card"><code>!레이팅초기화 @유저</code><p>유저 레이팅 초기화</p></div>
+      <div class="cmd-card"><code>!예측취소</code><p>오늘 AI예측 자동 포스팅 취소</p></div>
+      <div class="cmd-card"><code>!예측재전송</code><p>AI예측 강제 재포스팅</p></div>
+      <div class="cmd-card"><code>!리로드 [cog명]</code><p>Cog 핫리로드</p></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  나린봇 · KBO 야구 디스코드 봇 · <a href="https://github.com/riyuna/narin_bot" style="color:var(--accent)">GitHub</a>
+</footer>
+</body>
+</html>
