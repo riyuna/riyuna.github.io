@@ -17,13 +17,13 @@ minimal_mistakes_skin    : "dark" # "air", "aqua", "contrast", "dark", "dirt", "
 remote_theme : mmistakes/minimal-mistakes
 
 # Site Settings
-locale                   : "en-US"
-title                    : "KUREHA"
+locale                   : "ko-KR"
+title                    : "송은하 | Song Eunha"
 title_separator          : "-"
-subtitle                 : # site tagline that appears below site title in masthead
-name                     : "Riyuna "
-description              : "KUREHA"
-url                      : "https://riyuna.github.io" # the base hostname & protocol for your site e.g. "https://kureha.moe"
+subtitle                 : "KAIST Mathematical Sciences"
+name                     : "송은하 (Song Eunha)"
+description              : "KAIST 수리과학과 석박통합과정 송은하의 개인 홈페이지"
+url                      : "https://riyuna.github.io"
 baseurl                  : "" # the subpath of your site, e.g. ""
 repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
@@ -95,30 +95,18 @@ analytics:
 
 # Site Author
 author:
-  name             : "Riyuna"
-  avatar           : "owner.jpg" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "Image drawn by @Dawn_AIO in Twitter.\nKorean student/major in mathematics, and computer science."
-  location         : "Yuseong-Gu, Daejeon, South Korea"
-  email            : "eunha.stardust@gmail.com"
+  name             : "송은하 (Song Eunha)"
+  avatar           : "/owner.jpg"
+  bio              : "KAIST 수리과학과 석박통합과정. 확률론을 연구합니다."
+  location         : "대전, 대한민국"
+  email            : "eunha.song@kaist.ac.kr"
   links:
-#     - label: "Email"
-#       icon: "fas fa-fw fa-envelope-square"
-#       url: #"riyuna0427@gmail.com"
-#     - label: "Website"
-#       icon: "fas fa-fw fa-link"
-#       url: "https://riyuna.tistory.com/"
-#     - label: "Twitter"
-#       icon: "fab fa-fw fa-twitter-square"
-#       url: "https://twitter.com/riyuna_main"
-#     - label: "Facebook"
-#       icon: "fab fa-fw fa-facebook-square"
-#       url: "https://facebook.com/runnie0427/"
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope-square"
+      url: "mailto:eunha.song@kaist.ac.kr"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/riyuna/"
-#     - label: "Instagram"
-#       icon: "fab fa-fw fa-instagram"
-#       url: "https://instagram.com/riyuna_cosp/"
 
 # Site Footer
 footer:
@@ -282,10 +270,3 @@ defaults:
       share: true
       related: true
 
-theme: jekyll-theme-slate
-
-#language
-languages: ['ja', 'ko', 'en']
-default_lang: 'ko'
-exclude_from_localization: ['javascript', 'images', 'css']
-parallel_localization: false

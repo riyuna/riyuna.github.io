@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>미리보기 — 송은하 홈페이지</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #252a34;
+      --surface: #2e3440;
+      --text: #eaeaea;
+      --muted: #a0aab4;
+      --accent: #89cff0;
+      --link: #89cff0;
+      --border: #3b4252;
+      --masthead: #1c2128;
+      --sidebar-w: 220px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === MASTHEAD === */
+    .masthead {
+      background: var(--masthead);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .masthead-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      height: 52px;
+      gap: 1rem;
+    }
+    .site-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .site-subtitle {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-left: 0.3rem;
+    }
+    .nav-links {
+      display: flex;
+      gap: 0;
+      margin-left: 1.5rem;
+    }
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.88rem;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,0.08); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* controls */
+    .site-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-left: auto;
+    }
+    .lang-switcher { display: flex; gap: 2px; }
+    .lang-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text);
+      padding: 2px 9px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-family: inherit;
+    }
+    .lang-btn.active {
+      background: rgba(255,255,255,0.22);
+      border-color: rgba(255,255,255,0.65);
+      font-weight: 700;
+    }
+    .theme-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    /* === LAYOUT === */
+    .layout {
+      display: flex;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 2rem 1rem;
+      gap: 2rem;
+      flex: 1;
+    }
+
+    /* === SIDEBAR === */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+    }
+    .author-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 3px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 0.75rem;
+      overflow: hidden;
+    }
+    .author-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .author-name {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+    .author-bio {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+    .author-location {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .author-links-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 0.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.78rem;
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+    }
+    .author-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0;
+      font-size: 0.78rem;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .author-link:hover { text-decoration: underline; }
+
+    /* === MAIN CONTENT === */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .intro-block {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .intro-block p {
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 0.8rem;
+      color: var(--text);
+    }
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .post-item {
+      margin-bottom: 1.5rem;
+    }
+    .post-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--link);
+      text-decoration: none;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .post-title:hover { text-decoration: underline; }
+    .post-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+    .post-excerpt {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* === FOOTER === */
+    footer {
+      background: var(--masthead);
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--link); text-decoration: none; }
+
+    /* === LIGHT MODE === */
+    body.light-mode {
+      --bg: #f0f5fb;
+      --surface: #fff;
+      --text: #1a202c;
+      --muted: #6b7280;
+      --accent: #1d4ed8;
+      --link: #1d4ed8;
+      --border: #bfdbfe;
+      --masthead: #1e3a8a;
+    }
+    body.light-mode .lang-btn,
+    body.light-mode .theme-btn { color: #dbeafe; }
+    body.light-mode .nav-links a { color: #dbeafe; }
+    body.light-mode .site-title { color: #dbeafe; }
+    body.light-mode .site-subtitle { color: #93c5fd; }
+    body.light-mode .author-name { color: #1e3a8a; }
+    body.light-mode .author-links-btn {
+      background: #1e3a8a;
+      color: #fff;
+      border-color: #1e3a8a;
+    }
+
+    /* === BADGE === */
+    .preview-badge {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: #f59e0b;
+      color: #1a202c;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+<span class="preview-badge">⚠ 미리보기 전용</span>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-inner">
+    <a class="site-title" href="#">송은하 | Song Eunha</a>
+    <span class="site-subtitle">KAIST Mathematical Sciences</span>
+    <nav class="nav-links">
+      <a href="#" class="active" id="nav-cv">CV</a>
+      <a href="#" id="nav-pub">논문</a>
+      <a href="#" id="nav-talks">발표</a>
+      <a href="#" id="nav-blog">블로그</a>
+    </nav>
+    <div class="site-controls">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">한국어</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="ja" onclick="setLang('ja')">JA</button>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()" title="테마 전환">☀</button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="author-avatar">
+      <img src="owner.jpg" alt="프로필 사진" onerror="this.parentElement.textContent='👤'">
+    </div>
+    <div class="author-name">송은하 (Song Eunha)</div>
+    <div class="author-bio" id="author-bio">
+      KAIST 수리과학과 석박통합과정. 확률론을 연구합니다.
+    </div>
+    <div class="author-location" id="author-loc">📍 대전, 대한민국</div>
+    <a href="#" class="author-links-btn">팔로우</a>
+    <a href="mailto:eunha.song@kaist.ac.kr" class="author-link">✉ eunha.song@kaist.ac.kr</a>
+    <a href="https://github.com/riyuna/" class="author-link" target="_blank">⎇ github.com/riyuna</a>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="main-content">
+    <!-- 홈 인트로 -->
+    <div class="intro-block">
+      <div class="lang-block" data-lang="ko">
+        <p>안녕하세요. KAIST 수리과학과 석박통합과정 <strong>송은하</strong>입니다.</p>
+        <p>확률론을 연구하고 있으며, 이곳은 연구 활동과 생각들을 기록하는 개인 홈페이지입니다.<br>
+        블로그에는 수학적 글쓰기, 대학원 생활 등 다양한 글을 올릴 예정입니다.</p>
+      </div>
+      <div class="lang-block" data-lang="en" style="display:none">
+        <p>Hi! I'm <strong>Eunha Song</strong>, an MS/PhD student at the Department of Mathematical Sciences, KAIST.</p>
+        <p>My research interest is in probability theory. This is my personal homepage where I share research activities and writings.</p>
+      </div>
+      <div class="lang-block" data-lang="ja" style="display:none">
+        <p>こんにちは。KAIST 数理科学科 修士・博士一貫課程の<strong>宋恩夏（ソン・ウンハ）</strong>です。</p>
+        <p>確率論を研究しています。このページは研究活動や考えを記録する個人ホームページです。</p>
+      </div>
+    </div>
+
+    <!-- 최근 블로그 글 (예시) -->
+    <div class="section-label">최근 글</div>
+    <div class="post-item">
+      <a class="post-title" href="#">메인</a>
+      <div class="post-meta">2020년 6월 3일 &nbsp;·&nbsp; MAIN</div>
+      <div class="post-excerpt">첫 번째 게시글입니다.</div>
+    </div>
+    <div class="post-item" style="opacity:0.45; font-style:italic; font-size:0.85rem; color: var(--muted);">
+      새 블로그 글이 여기에 자동으로 표시됩니다.
+    </div>
+  </main>
+</div>
+
+<footer>
+  <p>Powered by <a href="https://jekyllrb.com/">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/">Minimal Mistakes</a></p>
+</footer>
+
+<script>
+  var lang = 'ko';
+  var theme = 'dark';
+
+  var navI18n = {
+    ko: { cv:'CV', pub:'논문', talks:'발표', blog:'블로그' },
+    en: { cv:'CV', pub:'Publications', talks:'Talks', blog:'Blog' },
+    ja: { cv:'CV', pub:'論文', talks:'講演', blog:'ブログ' },
+  };
+  var bioI18n = {
+    ko: 'KAIST 수리과학과 석박통합과정. 확률론을 연구합니다.',
+    en: 'MS/PhD student at KAIST Mathematical Sciences. Interested in probability theory.',
+    ja: 'KAIST 数理科学科 修士・博士一貫課程。確率論を研究しています。',
+  };
+  var locI18n = {
+    ko: '📍 대전, 대한민국',
+    en: '📍 Daejeon, South Korea',
+    ja: '📍 大田, 韓国',
+  };
+
+  function setLang(l) {
+    lang = l;
+    document.querySelectorAll('.lang-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.lang === l);
+    });
+    document.querySelectorAll('.lang-block').forEach(function(el){
+      el.style.display = el.dataset.lang === l ? 'block' : 'none';
+    });
+    document.getElementById('author-bio').textContent = bioI18n[l];
+    document.getElementById('author-loc').textContent = locI18n[l];
+    document.getElementById('nav-cv').textContent = navI18n[l].cv;
+    document.getElementById('nav-pub').textContent = navI18n[l].pub;
+    document.getElementById('nav-talks').textContent = navI18n[l].talks;
+    document.getElementById('nav-blog').textContent = navI18n[l].blog;
+  }
+
+  function toggleTheme() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.body.classList.toggle('light-mode', theme === 'light');
+    document.querySelector('.theme-btn').textContent = theme === 'dark' ? '☀' : '◑';
+  }
+</script>
+</body>
+</html>

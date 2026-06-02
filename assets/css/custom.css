@@ -1,0 +1,219 @@
+/* ============================================
+   Site Controls: Language Switcher + Theme Toggle
+   ============================================ */
+
+.site-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  padding-right: 0.5rem;
+}
+
+.lang-switcher {
+  display: flex;
+  gap: 2px;
+}
+
+.lang-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: inherit;
+  padding: 2px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1.6;
+}
+
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.lang-btn.active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.65);
+  font-weight: 700;
+}
+
+.theme-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  transition: background 0.15s;
+  color: inherit;
+  font-family: inherit;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   Light Mode Overrides (dark skin → light blue)
+   ============================================ */
+
+body.light-mode {
+  background-color: #f0f5fb !important;
+  color: #1a202c !important;
+}
+
+body.light-mode .masthead,
+body.light-mode .masthead__inner-wrap,
+body.light-mode .greedy-nav {
+  background: #1e3a8a !important;
+  border-bottom-color: #1e40af !important;
+}
+
+body.light-mode .greedy-nav a,
+body.light-mode .greedy-nav .site-title,
+body.light-mode .greedy-nav .site-subtitle {
+  color: #dbeafe !important;
+}
+
+body.light-mode .greedy-nav button,
+body.light-mode .greedy-nav__toggle {
+  color: #dbeafe !important;
+}
+
+body.light-mode .sidebar.sticky,
+body.light-mode .sidebar {
+  background: transparent !important;
+}
+
+body.light-mode .author__avatar img {
+  border-color: #bfdbfe !important;
+}
+
+body.light-mode .author__name {
+  color: #1e3a8a !important;
+}
+
+body.light-mode .author__bio {
+  color: #374151 !important;
+}
+
+body.light-mode .author__urls-wrapper .btn--inverse {
+  background: #1e3a8a !important;
+  color: #fff !important;
+}
+
+body.light-mode .author__urls a {
+  color: #1d4ed8 !important;
+}
+
+body.light-mode .page__content,
+body.light-mode .page__inner-wrap {
+  color: #1a202c !important;
+}
+
+body.light-mode .page__content a {
+  color: #1d4ed8 !important;
+}
+
+body.light-mode .page__title {
+  color: #1e3a8a !important;
+}
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode h5,
+body.light-mode h6 {
+  color: #1e3a8a !important;
+}
+
+body.light-mode table th {
+  background: #dbeafe !important;
+  color: #1e3a8a !important;
+}
+
+body.light-mode table td,
+body.light-mode table th {
+  border-color: #bfdbfe !important;
+  color: #1a202c !important;
+}
+
+body.light-mode .page__footer {
+  background: #1e3a8a !important;
+  color: #dbeafe !important;
+}
+
+body.light-mode .page__footer a {
+  color: #93c5fd !important;
+}
+
+body.light-mode .toc,
+body.light-mode .toc__menu {
+  background: #fff !important;
+  border-color: #bfdbfe !important;
+}
+
+body.light-mode .archive__item-title a {
+  color: #1d4ed8 !important;
+}
+
+body.light-mode .archive__item-excerpt {
+  color: #374151 !important;
+}
+
+body.light-mode code,
+body.light-mode pre {
+  background: #e8f0fe !important;
+  color: #1a202c !important;
+}
+
+/* ============================================
+   Homepage Intro Section
+   ============================================ */
+
+.homepage-intro {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.light-mode .homepage-intro {
+  border-bottom-color: #bfdbfe;
+}
+
+.homepage-intro p {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin-bottom: 0.8rem;
+}
+
+/* ============================================
+   Publications / Talks Placeholder
+   ============================================ */
+
+.placeholder-note {
+  font-style: italic;
+  border-left: 3px solid rgba(128, 128, 128, 0.4);
+  padding: 0.6rem 1rem;
+  margin: 1.5rem 0;
+  color: rgba(200, 200, 200, 0.75);
+}
+
+body.light-mode .placeholder-note {
+  border-left-color: #93c5fd;
+  color: #6b7280;
+}
+
+/* ============================================
+   Blog Post List Tweaks
+   ============================================ */
+
+.list__item .archive__item-title {
+  margin-top: 0.5em;
+}
