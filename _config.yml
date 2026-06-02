@@ -99,9 +99,8 @@ author:
   avatar           : "/owner.jpg"
   bio              : "KAIST 수리과학과 석박통합과정. 확률론을 연구합니다."
   location         : "대전, 대한민국"
-  email            : "eunha.song@kaist.ac.kr"
   links:
-    - label: "Email"
+    - label: "eunha.song [at] kaist.ac.kr"
       icon: "fas fa-fw fa-envelope-square"
       url: "mailto:eunha.song@kaist.ac.kr"
     - label: "GitHub"
