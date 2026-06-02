@@ -3,7 +3,7 @@ lang: 'ko'
 title: "자기 소개"
 date: 2022-04-12 17:30:00 +0900
 categories: MAIN
-
+published: false
 ---
 
 ![owner](/owner.jpg)

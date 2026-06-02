@@ -5,7 +5,7 @@ permalink: /publications/
 author_profile: true
 ---
 
-<div class="lang-block" data-lang="ko">
+<div class="lang-block" data-lang="ko" markdown="1">
 
 ## 논문
 
@@ -20,7 +20,7 @@ author_profile: true
 
 </div>
 
-<div class="lang-block" data-lang="en" style="display:none">
+<div class="lang-block" data-lang="en" style="display:none" markdown="1">
 
 ## Publications
 
@@ -35,7 +35,7 @@ Author names
 
 </div>
 
-<div class="lang-block" data-lang="ja" style="display:none">
+<div class="lang-block" data-lang="ja" style="display:none" markdown="1">
 
 ## 論文
 

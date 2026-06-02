@@ -5,7 +5,7 @@ permalink: /talks/
 author_profile: true
 ---
 
-<div class="lang-block" data-lang="ko">
+<div class="lang-block" data-lang="ko" markdown="1">
 
 ## 발표
 
@@ -19,7 +19,7 @@ author_profile: true
 
 </div>
 
-<div class="lang-block" data-lang="en" style="display:none">
+<div class="lang-block" data-lang="en" style="display:none" markdown="1">
 
 ## Talks
 
@@ -33,7 +33,7 @@ Event name, Location, Date.
 
 </div>
 
-<div class="lang-block" data-lang="ja" style="display:none">
+<div class="lang-block" data-lang="ja" style="display:none" markdown="1">
 
 ## 講演
 
