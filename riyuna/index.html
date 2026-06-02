@@ -1,342 +1,87 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>리유나 (Riyuna)</title>
-  <style>
-    :root {
-      --bg: #07111f;
-      --surface: #0d1f35;
-      --card: #112844;
-      --border: #1e3d5c;
-      --accent: #4da6ff;
-      --accent2: #7ec8ff;
-      --text: #e8f4ff;
-      --muted: #7aaac8;
-      --dim: #4a7a9b;
-      --header-bg: #0a1929;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.7; min-height: 100vh; display: flex; flex-direction: column; }
+---
+layout: single
+title: " "
+permalink: /riyuna/
+author_profile: true
+---
 
-    /* ── HEADER ── */
-    header {
-      background: var(--header-bg);
-      border-bottom: 2px solid var(--accent);
-      padding: 0 1.5rem;
-      display: flex;
-      align-items: center;
-      height: 52px;
-      gap: 1rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .site-title { font-size: 1rem; font-weight: 700; color: var(--accent2); white-space: nowrap; text-decoration: none; }
-    .site-sub { font-size: 0.75rem; color: var(--muted); margin-left: 0.2rem; }
-    .header-back { margin-left: auto; color: var(--accent); font-size: 0.8rem; text-decoration: none; border: 1px solid var(--border); padding: 0.2rem 0.7rem; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
-    .header-back:hover { background: var(--card); }
+<div class="lang-block" data-lang="ko" markdown="1">
 
-    /* ── CONTROLS (reused from main site style) ── */
-    .site-controls { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
-    .lang-switcher { display: flex; gap: 2px; }
-    .lang-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.28);
-      color: var(--text);
-      padding: 2px 9px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.7rem;
-      font-family: inherit;
-      letter-spacing: 0.02em;
-      transition: background 0.15s;
-      line-height: 1.6;
-    }
-    .lang-btn:hover { background: rgba(255,255,255,0.12); }
-    .lang-btn.active { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.6); font-weight: 700; }
-    .theme-toggle-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.28);
-      border-radius: 4px;
-      padding: 2px 8px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      color: var(--text);
-      font-family: inherit;
-      line-height: 1.5;
-      transition: background 0.15s;
-    }
-    .theme-toggle-btn:hover { background: rgba(255,255,255,0.12); }
+## Problem Solving
 
-    /* ── LAYOUT ── */
-    .container { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; flex: 1; }
-    section { margin-bottom: 3rem; }
-    h2 { font-size: 1rem; color: var(--accent2); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; margin-bottom: 1.3rem; letter-spacing: 0.04em; }
+| 플랫폼 | 프로필 | 성적 |
+|--------|--------|------|
+| Baekjoon | [runnie0427](https://www.acmicpc.net/user/runnie0427) | 2000+ 솔브 |
+| solved.ac | [runnie0427](https://solved.ac/profile/runnie0427) | <span style="color:skyblue">Diamond 1</span> |
+| Codeforces | [Eunha](https://codeforces.com/profile/Eunha) | <span style="color:orange">Orange</span> · 최고 2224 |
+| AtCoder | [Eunha](https://atcoder.jp/users/Eunha) | 1級 · 최고 1943 |
 
-    /* ── PROFILE ── */
-    .profile { display: flex; gap: 1.8rem; align-items: flex-start; }
-    .profile-img { width: 110px; height: 110px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; flex-shrink: 0; background: var(--surface); }
-    .profile-info { flex: 1; }
-    .profile-name { font-size: 1.2rem; font-weight: 700; color: var(--accent2); margin-bottom: 0.3rem; }
-    .profile-desc { color: var(--muted); font-size: 0.88rem; margin-bottom: 0.6rem; }
-    .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-    .tag { background: var(--card); border: 1px solid var(--border); color: var(--accent2); padding: 0.12rem 0.6rem; border-radius: 4px; font-size: 0.75rem; }
+## 리듬게임
 
-    /* ── GAME CARDS ── */
-    .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; }
-    .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem 1rem; transition: border-color 0.15s; }
-    .game-card:hover { border-color: var(--accent); }
-    .game-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 0.3rem; }
-    .game-stat { color: var(--muted); font-size: 0.83rem; }
+| 게임 | 기록 |
+|------|------|
+| <span style="color:magenta">Sound Voltex (SDVX)</span> | VF 21.3+ |
+| <span style="color:orange">pop'n music</span> | 49레벨 최대 85% |
+| beatmania IIDX | SP 十段 |
+| BMS | ★04 / - |
 
-    /* ── PS STATS ── */
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.7rem; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem 1rem; }
-    .stat-label { font-size: 0.82rem; font-weight: 700; color: var(--accent2); margin-bottom: 0.25rem; }
-    .stat-val { font-size: 0.83rem; color: var(--muted); }
-    .stat-val a { color: var(--accent); text-decoration: none; }
-    .stat-val a:hover { text-decoration: underline; }
+## 기타
 
-    /* ── MISC ── */
-    .misc-item { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
-    .misc-item:last-child { border-bottom: none; }
-    .misc-emoji { font-size: 1rem; flex-shrink: 0; }
-    .misc-text { font-size: 0.88rem; }
-    .misc-text strong { color: var(--accent2); }
-    .misc-sub { color: var(--muted); font-size: 0.8rem; }
-
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    footer { text-align: center; color: var(--dim); font-size: 0.78rem; padding: 2rem 1rem; border-top: 1px solid var(--border); }
-    footer a { color: var(--accent); }
-
-    /* ── LIGHT MODE ── */
-    body.light-mode {
-      --bg: #f0f5fb;
-      --surface: #ffffff;
-      --card: #e8f0fe;
-      --border: #bfdbfe;
-      --accent: #1d4ed8;
-      --accent2: #1e3a8a;
-      --text: #1a202c;
-      --muted: #6b7280;
-      --dim: #9ca3af;
-      --header-bg: #1e3a8a;
-    }
-    body.light-mode .lang-btn,
-    body.light-mode .theme-toggle-btn { color: #dbeafe; border-color: rgba(255,255,255,0.3); }
-    body.light-mode .lang-btn.active { background: rgba(255,255,255,0.22); }
-    body.light-mode .site-title { color: #dbeafe; }
-    body.light-mode .site-sub { color: #93c5fd; }
-    body.light-mode .header-back { color: #93c5fd; border-color: rgba(255,255,255,0.3); }
-    body.light-mode .header-back:hover { background: rgba(255,255,255,0.1); }
-  </style>
-</head>
-<body>
-
-<header>
-  <a class="site-title" href="#">리유나 <span class="site-sub">/ Riyuna</span></a>
-  <div class="site-controls">
-    <div class="lang-switcher">
-      <button class="lang-btn active" data-lang="ko">한국어</button>
-      <button class="lang-btn" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="ja">JA</button>
-    </div>
-    <button class="theme-toggle-btn" id="theme-btn" title="테마 전환">☀</button>
-  </div>
-  <a class="header-back" href="/">← 메인</a>
-</header>
-
-<div class="container">
-
-  <!-- Profile -->
-  <section>
-    <div class="profile">
-      <img class="profile-img" src="/owner.jpg" alt="프로필 사진" onerror="this.style.background='#1e3d5c'">
-      <div class="profile-info">
-        <div class="profile-name">리유나 (Riyuna) · 송은하</div>
-
-        <div class="lang-block" data-lang="ko">
-          <div class="profile-desc">KAIST 수리과학과 석박통합과정 / 수학 · PS · 리듬게임 · 야구 · 코스프레</div>
-          <div class="tags">
-            <span class="tag">확률론</span><span class="tag">PS</span><span class="tag">ICPC</span>
-            <span class="tag">리듬게임</span><span class="tag">삼성라이온즈</span><span class="tag">코스프레</span>
-          </div>
-        </div>
-
-        <div class="lang-block" data-lang="en" style="display:none">
-          <div class="profile-desc">MS/PhD student at KAIST Mathematical Sciences / Math · PS · Rhythm games · Baseball · Cosplay</div>
-          <div class="tags">
-            <span class="tag">Probability</span><span class="tag">PS</span><span class="tag">ICPC</span>
-            <span class="tag">Rhythm games</span><span class="tag">Samsung Lions</span><span class="tag">Cosplay</span>
-          </div>
-        </div>
-
-        <div class="lang-block" data-lang="ja" style="display:none">
-          <div class="profile-desc">KAIST 数理科学科 修士・博士一貫課程 / 数学 · PS · リズムゲーム · 野球 · コスプレ</div>
-          <div class="tags">
-            <span class="tag">確率論</span><span class="tag">PS</span><span class="tag">ICPC</span>
-            <span class="tag">リズムゲーム</span><span class="tag">サムスンライオンズ</span><span class="tag">コスプレ</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PS -->
-  <section>
-    <div class="lang-block" data-lang="ko"><h2>Problem Solving</h2></div>
-    <div class="lang-block" data-lang="en" style="display:none"><h2>Problem Solving</h2></div>
-    <div class="lang-block" data-lang="ja" style="display:none"><h2>Problem Solving</h2></div>
-
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Baekjoon / solved.ac</div>
-        <div class="stat-val">
-          <a href="https://www.acmicpc.net/user/runnie0427" target="_blank">runnie0427</a> · 2000+<br>
-          <a href="https://solved.ac/profile/runnie0427" target="_blank">solved.ac</a> <span style="color:skyblue">Diamond 1</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Codeforces</div>
-        <div class="stat-val">
-          <a href="https://codeforces.com/profile/Eunha" target="_blank">Eunha</a><br>
-          <span style="color:orange">Orange</span> · max 2224
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">AtCoder</div>
-        <div class="stat-val">
-          <a href="https://atcoder.jp/users/Eunha" target="_blank">Eunha</a><br>
-          1級 · max 1943
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 리듬게임 -->
-  <section>
-    <div class="lang-block" data-lang="ko"><h2>리듬게임</h2></div>
-    <div class="lang-block" data-lang="en" style="display:none"><h2>Rhythm Games</h2></div>
-    <div class="lang-block" data-lang="ja" style="display:none"><h2>リズムゲーム</h2></div>
-
-    <div class="game-grid">
-      <div class="game-card">
-        <div class="game-title"><span style="color:magenta">Sound Voltex (SDVX)</span></div>
-        <div class="game-stat">VF 21.3+</div>
-      </div>
-      <div class="game-card">
-        <div class="game-title"><span style="color:orange">pop'n music</span></div>
-        <div class="lang-block" data-lang="ko"><div class="game-stat">49레벨 최대 85%</div></div>
-        <div class="lang-block" data-lang="en" style="display:none"><div class="game-stat">Level 49, max 85%</div></div>
-        <div class="lang-block" data-lang="ja" style="display:none"><div class="game-stat">49レベル 最大85%</div></div>
-      </div>
-      <div class="game-card">
-        <div class="game-title">beatmania IIDX</div>
-        <div class="game-stat">SP 十段</div>
-      </div>
-      <div class="game-card">
-        <div class="game-title">BMS</div>
-        <div class="game-stat">★04 / -</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 기타 -->
-  <section>
-    <div class="lang-block" data-lang="ko"><h2>기타</h2></div>
-    <div class="lang-block" data-lang="en" style="display:none"><h2>Others</h2></div>
-    <div class="lang-block" data-lang="ja" style="display:none"><h2>その他</h2></div>
-
-    <div class="lang-block" data-lang="ko">
-      <div class="misc-item">
-        <div class="misc-text"><strong>삼성 라이온즈</strong> 팬 <span class="misc-sub">· 2008년부터</span></div>
-      </div>
-      <div class="misc-item">
-        <div class="misc-text"><strong>코스프레</strong> <span class="misc-sub">· 2017년부터</span></div>
-      </div>
-    </div>
-
-    <div class="lang-block" data-lang="en" style="display:none">
-      <div class="misc-item">
-        <div class="misc-text"><strong>Samsung Lions</strong> fan <span class="misc-sub">· since 2008</span></div>
-      </div>
-      <div class="misc-item">
-        <div class="misc-text"><strong>Cosplay</strong> <span class="misc-sub">· since 2017</span></div>
-      </div>
-    </div>
-
-    <div class="lang-block" data-lang="ja" style="display:none">
-      <div class="misc-item">
-        <div class="misc-text"><strong>サムスン・ライオンズ</strong>ファン <span class="misc-sub">· 2008年から</span></div>
-      </div>
-      <div class="misc-item">
-        <div class="misc-text"><strong>コスプレ</strong> <span class="misc-sub">· 2017年から</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 링크 -->
-  <section>
-    <div class="lang-block" data-lang="ko"><h2>링크</h2></div>
-    <div class="lang-block" data-lang="en" style="display:none"><h2>Links</h2></div>
-    <div class="lang-block" data-lang="ja" style="display:none"><h2>リンク</h2></div>
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">GitHub</div>
-        <div class="stat-val"><a href="https://github.com/riyuna/" target="_blank">github.com/riyuna</a></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Email</div>
-        <div class="stat-val"><a href="mailto:eunha.song@kaist.ac.kr">eunha.song@kaist.ac.kr</a></div>
-      </div>
-    </div>
-  </section>
+- **삼성 라이온즈** 팬 · 2008년부터
+- **코스프레** · 2017년부터
 
 </div>
 
-<footer>
-  <a href="/">← kureha.moe</a>
-</footer>
+<div class="lang-block" data-lang="en" style="display:none" markdown="1">
 
-<script>
-(function () {
-  var lang = localStorage.getItem('site-lang') || 'ko';
-  var theme = localStorage.getItem('site-theme') || 'dark';
+## Problem Solving
 
-  function applyLang(l) {
-    lang = l;
-    localStorage.setItem('site-lang', l);
-    document.querySelectorAll('.lang-block').forEach(function (el) {
-      el.style.display = el.dataset.lang === l ? 'block' : 'none';
-    });
-    document.querySelectorAll('.lang-btn').forEach(function (btn) {
-      btn.classList.toggle('active', btn.dataset.lang === l);
-    });
-  }
+| Platform | Profile | Rating |
+|----------|---------|--------|
+| Baekjoon | [runnie0427](https://www.acmicpc.net/user/runnie0427) | 2000+ solves |
+| solved.ac | [runnie0427](https://solved.ac/profile/runnie0427) | <span style="color:skyblue">Diamond 1</span> |
+| Codeforces | [Eunha](https://codeforces.com/profile/Eunha) | <span style="color:orange">Orange</span> · max 2224 |
+| AtCoder | [Eunha](https://atcoder.jp/users/Eunha) | 1級 · max 1943 |
 
-  function applyTheme(t) {
-    theme = t;
-    localStorage.setItem('site-theme', t);
-    document.body.classList.toggle('light-mode', t === 'light');
-    document.getElementById('theme-btn').textContent = t === 'dark' ? '☀' : '◑';
-  }
+## Rhythm Games
 
-  document.querySelector('.lang-switcher').addEventListener('click', function (e) {
-    var btn = e.target.closest('.lang-btn');
-    if (btn) applyLang(btn.dataset.lang);
-  });
+| Game | Record |
+|------|--------|
+| <span style="color:magenta">Sound Voltex (SDVX)</span> | VF 21.3+ |
+| <span style="color:orange">pop'n music</span> | Level 49, max 85% |
+| beatmania IIDX | SP 十段 |
+| BMS | ★04 / - |
 
-  document.getElementById('theme-btn').addEventListener('click', function () {
-    applyTheme(theme === 'dark' ? 'light' : 'dark');
-  });
+## Others
 
-  applyLang(lang);
-  applyTheme(theme);
-})();
-</script>
-</body>
-</html>
+- **Samsung Lions** fan · since 2008
+- **Cosplay** · since 2017
+
+</div>
+
+<div class="lang-block" data-lang="ja" style="display:none" markdown="1">
+
+## Problem Solving
+
+| プラットフォーム | プロフィール | 成績 |
+|----------------|------------|------|
+| Baekjoon | [runnie0427](https://www.acmicpc.net/user/runnie0427) | 2000+問 |
+| solved.ac | [runnie0427](https://solved.ac/profile/runnie0427) | <span style="color:skyblue">Diamond 1</span> |
+| Codeforces | [Eunha](https://codeforces.com/profile/Eunha) | <span style="color:orange">Orange</span> · 最高 2224 |
+| AtCoder | [Eunha](https://atcoder.jp/users/Eunha) | 1級 · 最高 1943 |
+
+## リズムゲーム
+
+| ゲーム | 記録 |
+|--------|------|
+| <span style="color:magenta">Sound Voltex (SDVX)</span> | VF 21.3+ |
+| <span style="color:orange">pop'n music</span> | 49レベル 最大85% |
+| beatmania IIDX | SP 十段 |
+| BMS | ★04 / - |
+
+## その他
+
+- **サムスン・ライオンズ**ファン · 2008年から
+- **コスプレ** · 2017年から
+
+</div>

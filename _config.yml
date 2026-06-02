@@ -102,7 +102,7 @@ author:
   links:
     - label: "eunha.song [at] kaist.ac.kr"
       icon: "fas fa-fw fa-envelope-square"
-      url: "mailto:eunha.song@kaist.ac.kr"
+      url: "#email"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/riyuna/"
