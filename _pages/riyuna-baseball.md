@@ -17,7 +17,7 @@ author_profile: true
 
 | 항목 | 내용 |
 |------|------|
-| 시즌 | 2025 KBO 리그 |
+| 시즌 | 2026 KBO 리그 |
 | 응원팀 | 삼성 라이온즈 |
 | 마지막 업데이트 | — |
 
@@ -60,7 +60,7 @@ author_profile: true
 
 <div class="lang-block" data-lang="en" style="display:none" markdown="1">
 
-## ⚾ Eunhasu Academy KBO Predictions
+## ⚾ Milkyway Math Cram KBO Predictions
 
 > This page publishes KBO game prediction results and accuracy statistics.
 
@@ -76,7 +76,7 @@ author_profile: true
 
 ---
 
-## Eunhasu Academy Accuracy
+## Milkyway Math Cram Accuracy
 
 | Category | Predictions | Correct | Accuracy |
 |----------|-------------|---------|----------|
@@ -106,7 +106,7 @@ author_profile: true
 
 <div class="lang-block" data-lang="ja" style="display:none" markdown="1">
 
-## ⚾ 銀河水数学学院 KBO 勝敗予想
+## ⚾ 銀河数数学学習塾 KBO 勝敗予想
 
 > このページはKBO試合の勝敗予想結果と的中率を公示するページです。
 
@@ -116,13 +116,13 @@ author_profile: true
 
 | 項目 | 内容 |
 |------|------|
-| シーズン | 2025 KBOリーグ |
+| シーズン | 2026 KBOリーグ |
 | 応援チーム | サムスン・ライオンズ |
 | 最終更新 | — |
 
 ---
 
-## 銀河水数学学院 的中率
+## 銀河数数学学習塾 的中率
 
 | 区分 | 予想数 | 的中 | 的中率 |
 |------|--------|------|--------|
