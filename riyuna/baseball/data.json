@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-07 00:49",
+  "updated": "2026-06-09 00:12",
   "contest": {
     "rank": null,
     "total_participants": null,
@@ -7,57 +7,57 @@
     "last_updated": null
   },
   "today": {
-    "date": "2026-06-07",
+    "date": "2026-06-09",
     "games": [
       {
-        "s_no": 20260306,
-        "home_team_code": 6002,
-        "away_team_code": 10001,
-        "home_team": "두산",
-        "away_team": "키움",
-        "home_win_prob": 56.88,
-        "game_time": "17:00",
-        "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +18), 최근 흐름 우세, 리그 순위 우위"
+        "s_no": 20260311,
+        "home_team_code": 5002,
+        "away_team_code": 9002,
+        "home_team": "LG",
+        "away_team": "SSG",
+        "home_win_prob": 59.73,
+        "game_time": "18:30",
+        "reason": "최근 흐름 우세, 리그 순위 우위"
       },
       {
-        "s_no": 20260307,
-        "home_team_code": 9002,
-        "away_team_code": 12001,
-        "home_team": "SSG",
-        "away_team": "KT",
-        "home_win_prob": 41.66,
-        "game_time": "17:00",
-        "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +5), 최근 흐름 우세, 리그 순위 우위"
+        "s_no": 20260312,
+        "home_team_code": 10001,
+        "away_team_code": 11001,
+        "home_team": "키움",
+        "away_team": "NC",
+        "home_win_prob": 47.56,
+        "game_time": "18:30",
+        "reason": "타선 전력 우위(wRC+ +15), 최근 흐름 우세, 리그 순위 우위, 불펜 안정성 우위"
       },
       {
-        "s_no": 20260308,
-        "home_team_code": 2002,
+        "s_no": 20260313,
+        "home_team_code": 12001,
         "away_team_code": 1001,
-        "home_team": "KIA",
+        "home_team": "KT",
         "away_team": "삼성",
-        "home_win_prob": 52.52,
-        "game_time": "17:00",
-        "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +5), 불펜 안정성 우위"
+        "home_win_prob": 54.79,
+        "game_time": "18:30",
+        "reason": "선발 매치업 우위, 최근 흐름 우세"
       },
       {
-        "s_no": 20260309,
+        "s_no": 20260314,
+        "home_team_code": 7002,
+        "away_team_code": 2002,
+        "home_team": "한화",
+        "away_team": "KIA",
+        "home_win_prob": 51.3,
+        "game_time": "18:30",
+        "reason": "선발 매치업 우위, 최근 흐름 우세"
+      },
+      {
+        "s_no": 20260315,
         "home_team_code": 3001,
-        "away_team_code": 7002,
+        "away_team_code": 6002,
         "home_team": "롯데",
-        "away_team": "한화",
-        "home_win_prob": 41.73,
-        "game_time": "17:00",
-        "reason": "타선 전력 우위(wRC+ +12), 최근 흐름 우세, 리그 순위 우위"
-      },
-      {
-        "s_no": 20260310,
-        "home_team_code": 11001,
-        "away_team_code": 5002,
-        "home_team": "NC",
-        "away_team": "LG",
-        "home_win_prob": 45.78,
-        "game_time": "17:00",
-        "reason": "선발 매치업 우위, 최근 흐름 우세, 리그 순위 우위"
+        "away_team": "두산",
+        "home_win_prob": 41.0,
+        "game_time": "18:30",
+        "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +19), 최근 흐름 우세, 리그 순위 우위, 불펜 안정성 우위"
       }
     ]
   },
@@ -252,6 +252,71 @@
           "home_win_prob": 39.96,
           "game_time": "17:00",
           "reason": "선발 매치업 우위, 최근 흐름 우세, 리그 순위 우위, 불펜 안정성 우위",
+          "actual_winner": "NC",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "date": "2026-06-07",
+      "games": [
+        {
+          "s_no": 20260306,
+          "home_team_code": 6002,
+          "away_team_code": 10001,
+          "home_team": "두산",
+          "away_team": "키움",
+          "home_win_prob": 56.88,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +18), 최근 흐름 우세, 리그 순위 우위",
+          "actual_winner": "키움",
+          "correct": false
+        },
+        {
+          "s_no": 20260307,
+          "home_team_code": 9002,
+          "away_team_code": 12001,
+          "home_team": "SSG",
+          "away_team": "KT",
+          "home_win_prob": 41.66,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +5), 최근 흐름 우세, 리그 순위 우위",
+          "actual_winner": "SSG",
+          "correct": false
+        },
+        {
+          "s_no": 20260308,
+          "home_team_code": 2002,
+          "away_team_code": 1001,
+          "home_team": "KIA",
+          "away_team": "삼성",
+          "home_win_prob": 52.52,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +5), 불펜 안정성 우위",
+          "actual_winner": "KIA",
+          "correct": true
+        },
+        {
+          "s_no": 20260309,
+          "home_team_code": 3001,
+          "away_team_code": 7002,
+          "home_team": "롯데",
+          "away_team": "한화",
+          "home_win_prob": 41.73,
+          "game_time": "17:00",
+          "reason": "타선 전력 우위(wRC+ +12), 최근 흐름 우세, 리그 순위 우위",
+          "actual_winner": "한화",
+          "correct": true
+        },
+        {
+          "s_no": 20260310,
+          "home_team_code": 11001,
+          "away_team_code": 5002,
+          "home_team": "NC",
+          "away_team": "LG",
+          "home_win_prob": 45.78,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위, 최근 흐름 우세, 리그 순위 우위",
           "actual_winner": "NC",
           "correct": false
         }
