@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-27 15:23",
+  "updated": "2026-06-28 01:26",
   "contest": {
     "rank": null,
     "total_participants": null,
@@ -7,57 +7,57 @@
     "last_updated": null
   },
   "today": {
-    "date": "2026-06-27",
+    "date": "2026-06-28",
     "games": [
       {
-        "s_no": 20260391,
+        "s_no": 20260396,
         "home_team_code": 6002,
         "away_team_code": 2002,
         "home_team": "두산",
         "away_team": "KIA",
-        "home_win_prob": 58.4,
+        "home_win_prob": 61.46,
         "game_time": "17:00",
-        "reason": "선발 매치업 우위"
+        "reason": "홈 어드밴티지 등 복합 요인"
       },
       {
-        "s_no": 20260392,
+        "s_no": 20260397,
         "home_team_code": 9002,
         "away_team_code": 7002,
         "home_team": "SSG",
         "away_team": "한화",
-        "home_win_prob": 45.29,
+        "home_win_prob": 33.28,
         "game_time": "17:00",
-        "reason": "리그 순위 우위, 불펜 안정성 우위"
+        "reason": "선발 매치업 우위, 최근 흐름 우세, 리그 순위 우위, 불펜 안정성 우위"
       },
       {
-        "s_no": 20260393,
+        "s_no": 20260398,
         "home_team_code": 1001,
         "away_team_code": 12001,
         "home_team": "삼성",
         "away_team": "KT",
-        "home_win_prob": 50.81,
+        "home_win_prob": 39.72,
         "game_time": "17:00",
-        "reason": "선발 매치업 우위, 최근 흐름 우세, 불펜 안정성 우위"
+        "reason": "선발 매치업 우위"
       },
       {
-        "s_no": 20260394,
+        "s_no": 20260399,
         "home_team_code": 3001,
         "away_team_code": 5002,
         "home_team": "롯데",
         "away_team": "LG",
-        "home_win_prob": 45.36,
+        "home_win_prob": 49.5,
         "game_time": "17:00",
         "reason": "선발 매치업 우위, 리그 순위 우위"
       },
       {
-        "s_no": 20260395,
+        "s_no": 20260400,
         "home_team_code": 11001,
         "away_team_code": 10001,
         "home_team": "NC",
         "away_team": "키움",
-        "home_win_prob": 63.62,
+        "home_win_prob": 57.29,
         "game_time": "17:00",
-        "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +14), 최근 흐름 우세, 리그 순위 우위, 불펜 안정성 우위"
+        "reason": "선발 매치업 우위, 최근 흐름 우세, 리그 순위 우위, 불펜 안정성 우위"
       }
     ]
   },
@@ -644,6 +644,71 @@
           "reason": "타선 전력 우위(wRC+ +12), 최근 흐름 우세, 리그 순위 우위",
           "actual_winner": "NC",
           "correct": true
+        }
+      ]
+    },
+    {
+      "date": "2026-06-27",
+      "games": [
+        {
+          "s_no": 20260391,
+          "home_team_code": 6002,
+          "away_team_code": 2002,
+          "home_team": "두산",
+          "away_team": "KIA",
+          "home_win_prob": 58.4,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위",
+          "actual_winner": "두산",
+          "correct": true
+        },
+        {
+          "s_no": 20260392,
+          "home_team_code": 9002,
+          "away_team_code": 7002,
+          "home_team": "SSG",
+          "away_team": "한화",
+          "home_win_prob": 45.29,
+          "game_time": "17:00",
+          "reason": "리그 순위 우위, 불펜 안정성 우위",
+          "actual_winner": "한화",
+          "correct": true
+        },
+        {
+          "s_no": 20260393,
+          "home_team_code": 1001,
+          "away_team_code": 12001,
+          "home_team": "삼성",
+          "away_team": "KT",
+          "home_win_prob": 50.81,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위, 최근 흐름 우세, 불펜 안정성 우위",
+          "actual_winner": "삼성",
+          "correct": true
+        },
+        {
+          "s_no": 20260394,
+          "home_team_code": 3001,
+          "away_team_code": 5002,
+          "home_team": "롯데",
+          "away_team": "LG",
+          "home_win_prob": 45.36,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위, 리그 순위 우위",
+          "actual_winner": "LG",
+          "correct": true
+        },
+        {
+          "s_no": 20260395,
+          "home_team_code": 11001,
+          "away_team_code": 10001,
+          "home_team": "NC",
+          "away_team": "키움",
+          "home_win_prob": 63.62,
+          "game_time": "17:00",
+          "reason": "선발 매치업 우위, 타선 전력 우위(wRC+ +14), 최근 흐름 우세, 리그 순위 우위, 불펜 안정성 우위",
+          "actual_winner": "키움",
+          "correct": false
         }
       ]
     }
