@@ -34,6 +34,12 @@
     .cat-btn:hover { border-color: var(--accent); }
     .cat-btn.active { background: var(--card); border-color: var(--accent); color: var(--accent2); font-weight: bold; }
 
+    .time-select { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .time-select .time-label { color: var(--muted); font-size: 0.85rem; }
+    .time-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.9rem; color: var(--text); cursor: pointer; font-size: 0.85rem; }
+    .time-btn:hover { border-color: var(--accent); }
+    .time-btn.active { background: var(--card); border-color: var(--accent); color: var(--accent2); font-weight: bold; }
+
     #quiz-area { display: none; }
     #quiz-area.show { display: block; }
 
@@ -54,11 +60,24 @@
     .guess-row button:hover { background: var(--accent2); }
     .guess-row button.hint-btn { background: var(--card); color: var(--accent2); border: 1px solid var(--border); }
     .guess-row button.hint-btn:hover { border-color: var(--accent); }
+    .guess-row button.giveup-btn { background: var(--card); color: var(--bad); border: 1px solid var(--border); }
+    .guess-row button.giveup-btn:hover { border-color: var(--bad); }
     .guess-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #timer-display { font-variant-numeric: tabular-nums; }
+    #timer-display.warn { color: var(--bad); font-weight: bold; }
 
     #feedback { min-height: 1.4rem; font-size: 0.85rem; }
     #feedback.ok { color: var(--good); }
     #feedback.bad { color: var(--bad); }
+
+    .result-panel { background: var(--card); border: 1px solid var(--accent); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; display: none; }
+    .result-panel.show { display: block; }
+    .result-panel .result-title { font-size: 1.05rem; color: var(--accent2); font-weight: bold; margin-bottom: 0.6rem; }
+    .result-panel .result-stats { display: flex; gap: 1.4rem; font-size: 0.88rem; color: var(--muted); margin-bottom: 0.8rem; }
+    .result-panel .result-stats b { color: var(--text); }
+    .result-panel button { background: var(--accent); border: none; border-radius: 6px; padding: 0.5rem 1rem; color: #07111f; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+    .result-panel button:hover { background: var(--accent2); }
 
     .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
     table.quiz-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; white-space: nowrap; }
@@ -67,6 +86,8 @@
     table.quiz-table td.name-col { text-align: left; }
     table.quiz-table tr.solved { background: rgba(92,184,92,0.08); }
     table.quiz-table tr.solved td.name-col { color: var(--good); font-weight: bold; }
+    table.quiz-table tr.revealed-end { background: rgba(224,92,92,0.06); }
+    table.quiz-table tr.revealed-end td.name-col { color: var(--bad); font-style: italic; }
     table.quiz-table td.masked { color: var(--dim); }
     table.quiz-table tr.flash-correct { animation: flashGood 0.6s; }
     @keyframes flashGood { from { background: rgba(92,184,92,0.35); } to { background: rgba(92,184,92,0.08); } }
@@ -100,12 +121,28 @@
     데이터 기준일: <b id="snapshot-date">-</b> (나린봇 DB 스냅샷)
   </p>
 
+  <div class="time-select" id="time-select">
+    <span class="time-label">제한시간:</span>
+    <button class="time-btn" data-sec="300">5분</button>
+    <button class="time-btn active" data-sec="600">10분</button>
+    <button class="time-btn" data-sec="0">무제한</button>
+  </div>
+
   <div class="cat-grid" id="cat-grid"></div>
 
   <div id="quiz-area">
     <div class="quiz-title-row">
       <div class="title" id="quiz-title"></div>
       <div class="note" id="asc-note"></div>
+    </div>
+
+    <div class="result-panel" id="result-panel">
+      <div class="result-title" id="result-title"></div>
+      <div class="result-stats">
+        <span>정답 <b id="result-solved"></b>/<span id="result-total"></span></span>
+        <span>소요시간 <b id="result-time"></b></span>
+      </div>
+      <button id="result-restart-btn">다른 카테고리 풀기</button>
     </div>
 
     <div class="quiz-layout">
@@ -126,18 +163,22 @@
       <div class="side-col">
         <div class="side-stats">
           <span>정답 <b id="solved-count">0</b>/<span id="total-count">0</span></span>
+          <span id="timer-display">⏱ --:--</span>
+        </div>
+        <div class="side-stats">
           <span>힌트 <b id="hint-left">3</b>회 남음</span>
         </div>
         <div class="guess-row">
           <input type="text" id="guess-input" placeholder="선수 이름 입력 후 Enter" autocomplete="off">
           <button id="guess-btn">제출</button>
           <button id="hint-btn" class="hint-btn">힌트 보기</button>
+          <button id="giveup-btn" class="giveup-btn">중도포기</button>
         </div>
         <div id="feedback"></div>
       </div>
     </div>
 
-    <p class="footer-note">전체 정답을 다 맞히면 완료. 새로고침하면 그 카테고리는 다시 시작된다 (로컬 진행상황 저장 없음).</p>
+    <p class="footer-note">전체 정답을 다 맞히거나 시간이 끝나면 결과가 표시된다. 새로고침하면 그 카테고리는 다시 시작된다 (로컬 진행상황 저장 없음).</p>
   </div>
 </div>
 
@@ -155,6 +196,10 @@
   var revealedCols = new Set();
   var PAGE_SIZE = 25;
   var currentPage = 0;
+  var selectedSeconds = 600;
+  var timerInterval = null;
+  var startTimeMs = null;
+  var quizEndedState = null; // null | 'solved' | 'timeout' | 'giveup'
 
   function normalize(name) {
     return name.replace(/\s+/g, '').toLowerCase();
@@ -203,6 +248,7 @@
         nameToSlots[k].push(slot.slot_id);
       });
       slot.solved = false;
+      slot.revealed = false;
     });
 
     current = { key: key, def: def, nameToSlots: nameToSlots };
@@ -210,6 +256,8 @@
     hintCount = 0;
     revealedCols = new Set();
     currentPage = 0;
+    quizEndedState = null;
+    startTimeMs = Date.now();
 
     document.getElementById('quiz-area').classList.add('show');
     document.getElementById('quiz-title').textContent = def.label + ' TOP ' + def.slots.length;
@@ -220,11 +268,71 @@
     document.getElementById('feedback').textContent = '';
     document.getElementById('feedback').className = '';
     document.getElementById('guess-input').value = '';
+    document.getElementById('guess-input').disabled = false;
     document.getElementById('guess-input').focus();
+    document.getElementById('guess-btn').disabled = false;
     document.getElementById('hint-btn').disabled = false;
+    document.getElementById('giveup-btn').disabled = false;
+    document.getElementById('result-panel').classList.remove('show');
 
     renderTable();
+    startTimer(selectedSeconds);
     document.getElementById('quiz-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function startTimer(seconds) {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    var display = document.getElementById('timer-display');
+    display.classList.remove('warn');
+    if (!seconds) {
+      display.textContent = '⏱ 무제한';
+      return;
+    }
+    var remaining = seconds;
+    updateTimerDisplay(remaining);
+    timerInterval = setInterval(function () {
+      remaining--;
+      updateTimerDisplay(remaining);
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        endQuiz('timeout');
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay(sec) {
+    var display = document.getElementById('timer-display');
+    var mm = Math.floor(sec / 60), ss = sec % 60;
+    display.textContent = '⏱ ' + mm + ':' + (ss < 10 ? '0' : '') + ss;
+    display.classList.toggle('warn', sec <= 30);
+  }
+
+  function endQuiz(reason) {
+    if (!current || quizEndedState) return;
+    quizEndedState = reason;
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+
+    document.getElementById('guess-input').disabled = true;
+    document.getElementById('guess-btn').disabled = true;
+    document.getElementById('hint-btn').disabled = true;
+    document.getElementById('giveup-btn').disabled = true;
+
+    current.def.slots.forEach(function (slot) {
+      if (!slot.solved) slot.revealed = true;
+    });
+    renderTable();
+
+    var elapsedSec = Math.max(0, Math.floor((Date.now() - startTimeMs) / 1000));
+    var mm = Math.floor(elapsedSec / 60), ss = elapsedSec % 60;
+    var titleMap = { solved: '전체 정답! 완료', timeout: '시간 종료', giveup: '중도 포기' };
+
+    document.getElementById('result-title').textContent = titleMap[reason] || '종료';
+    document.getElementById('result-solved').textContent = solvedCount;
+    document.getElementById('result-total').textContent = current.def.slots.length;
+    document.getElementById('result-time').textContent = mm + '분 ' + (ss < 10 ? '0' : '') + ss + '초';
+    document.getElementById('result-panel').classList.add('show');
+    document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function totalPages() {
@@ -247,15 +355,16 @@
       var tr = document.createElement('tr');
       tr.id = 'slot-' + slot.slot_id;
       if (slot.solved) tr.classList.add('solved');
+      else if (slot.revealed) tr.classList.add('revealed-end');
 
       var cells = '<td>' + slot.rank_display + '</td>';
       def.hint_cols.forEach(function (c) {
-        var shown = slot.solved || revealedCols.has(c.key);
+        var shown = slot.solved || slot.revealed || revealedCols.has(c.key);
         var val = c.key === 'team' ? slot.players[0].team
           : (slot.players[0].stats[c.key] != null ? slot.players[0].stats[c.key] : '-');
         cells += shown ? '<td>' + val + '</td>' : '<td class="masked">?</td>';
       });
-      var nameVal = slot.solved ? slot.players[0].name : '???';
+      var nameVal = (slot.solved || slot.revealed) ? slot.players[0].name : '???';
       cells += '<td class="name-col">' + nameVal + '</td>';
       tr.innerHTML = cells;
       body.appendChild(tr);
@@ -317,8 +426,7 @@
     input.focus();
 
     if (solvedCount >= current.def.slots.length) {
-      showFeedback('전부 맞혔다! ' + solvedCount + '/' + current.def.slots.length + ' 완료', true);
-      document.getElementById('hint-btn').disabled = true;
+      endQuiz('solved');
     }
   }
 
@@ -349,6 +457,22 @@
   });
   document.getElementById('next-page').addEventListener('click', function () {
     if (currentPage < totalPages() - 1) { currentPage++; renderTable(); }
+  });
+  document.getElementById('giveup-btn').addEventListener('click', function () {
+    if (!current || quizEndedState) return;
+    if (confirm('정말 포기할까? 못 맞힌 선수 이름이 전부 공개돼.')) {
+      endQuiz('giveup');
+    }
+  });
+  document.getElementById('result-restart-btn').addEventListener('click', function () {
+    document.getElementById('cat-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.querySelectorAll('.time-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      selectedSeconds = parseInt(btn.dataset.sec, 10) || 0;
+      document.querySelectorAll('.time-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+    });
   });
 
   loadData();
