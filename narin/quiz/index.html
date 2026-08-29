@@ -330,10 +330,11 @@
       document.getElementById('hint-btn').disabled = true;
       return;
     }
-    revealedCols.add(hidden[0].key);
+    var pick = hidden[Math.floor(Math.random() * hidden.length)];
+    revealedCols.add(pick.key);
     hintCount++;
     document.getElementById('hint-left').textContent = MAX_HINTS - hintCount;
-    showFeedback('힌트: "' + hidden[0].label + '" 컬럼 공개', true);
+    showFeedback('힌트: "' + pick.label + '" 컬럼 공개', true);
     renderTable();
     if (hintCount >= MAX_HINTS) document.getElementById('hint-btn').disabled = true;
   }
