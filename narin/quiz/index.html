@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>나린봇 야구퀴즈 - 통산기록</title>
+  <title>나린봇 야구퀴즈</title>
   <style>
     :root {
       --bg: #07111f;
@@ -29,10 +29,19 @@
     .intro { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.4rem; }
     .intro b { color: var(--accent2); }
 
+    .mode-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; }
+    .mode-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1.2rem; color: var(--muted); cursor: pointer; font-size: 0.92rem; }
+    .mode-btn:hover { border-color: var(--accent); }
+    .mode-btn.active { background: var(--card); border-color: var(--accent); color: var(--accent2); font-weight: bold; }
+
     .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.6rem; margin-bottom: 1.6rem; }
     .cat-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; text-align: center; cursor: pointer; color: var(--text); font-size: 0.92rem; transition: all 0.15s; }
     .cat-btn:hover { border-color: var(--accent); }
     .cat-btn.active { background: var(--card); border-color: var(--accent); color: var(--accent2); font-weight: bold; }
+
+    .year-select-row { align-items: center; gap: 0.5rem; margin-bottom: 1.4rem; }
+    .year-select-row .time-label { color: var(--muted); font-size: 0.85rem; }
+    .year-select-row select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.7rem; color: var(--text); font-size: 0.9rem; }
 
     .time-select { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
     .time-select .time-label { color: var(--muted); font-size: 0.85rem; }
@@ -110,16 +119,21 @@
 <body>
 <header>
   <h1>⚾ 나린봇 야구퀴즈</h1>
-  <span style="color:var(--muted); font-size:0.88rem;">통산기록 TOP100 순위 맞히기</span>
+  <span style="color:var(--muted); font-size:0.88rem;">통산기록 · 연도별 시상 순위 맞히기</span>
   <a class="back" href="/narin/">← 명령어 안내로</a>
 </header>
 
 <div class="container">
   <p class="intro">
-    카테고리를 고르면 <b>역대 통산기록 TOP100</b> 표가 뜬다. 이름은 가려져 있고, 순위·기록만 보인다.
+    카테고리를 고르면 <b>TOP10(또는 TOP100)</b> 표가 뜬다. 이름은 가려져 있고, 순위·기록만 보인다.
     선수 이름을 맞히면 그 줄이 공개된다. 공동 순위는 한 명씩 따로 맞혀야 한다. 힌트를 쓰면 컬럼이 하나씩 열린다.<br>
-    데이터 기준일: <b id="snapshot-date">-</b> (나린봇 DB 스냅샷)
+    데이터 기준일: <b id="snapshot-date">-</b>
   </p>
+
+  <div class="mode-tabs" id="mode-tabs">
+    <button class="mode-btn active" data-mode="career">통산기록 TOP100</button>
+    <button class="mode-btn" data-mode="yearly">연도별 시상 TOP10</button>
+  </div>
 
   <div class="time-select" id="time-select">
     <span class="time-label">제한시간:</span>
@@ -129,6 +143,11 @@
   </div>
 
   <div class="cat-grid" id="cat-grid"></div>
+
+  <div class="year-select-row" id="year-select-row" style="display:none">
+    <span class="time-label">연도:</span>
+    <select id="year-select"></select>
+  </div>
 
   <div id="quiz-area">
     <div class="quiz-title-row">
@@ -189,6 +208,10 @@
 <script>
 (function () {
   var DATA = null;
+  var YEARLY = null;
+  var yearlyLoaded = false;
+  var mode = 'career'; // 'career' | 'yearly'
+  var currentYearlyKey = null;
   var current = null; // { key, def, nameToSlots }
   var solvedCount = 0;
   var hintCount = 0;
@@ -211,14 +234,52 @@
       .then(function (json) {
         DATA = json;
         document.getElementById('snapshot-date').textContent = json.snapshot_at || '-';
-        renderCategoryGrid();
+        renderCategoryGridCareer();
       })
       .catch(function () {
         document.getElementById('cat-grid').innerHTML = '<p style="color:var(--bad)">데이터를 불러오지 못했습니다.</p>';
       });
   }
 
-  function renderCategoryGrid() {
+  function loadYearlyData() {
+    if (yearlyLoaded) return Promise.resolve();
+    return fetch('/narin/quiz/yearly_data.json?t=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        YEARLY = json;
+        yearlyLoaded = true;
+      })
+      .catch(function () {
+        document.getElementById('cat-grid').innerHTML = '<p style="color:var(--bad)">연도별 데이터를 불러오지 못했습니다.</p>';
+      });
+  }
+
+  function switchMode(newMode) {
+    if (mode === newMode) return;
+    mode = newMode;
+    document.querySelectorAll('.mode-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.mode === newMode);
+    });
+    document.getElementById('year-select-row').style.display = newMode === 'yearly' ? 'flex' : 'none';
+    document.getElementById('quiz-area').classList.remove('show');
+    current = null;
+    quizEndedState = null;
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+
+    if (newMode === 'career') {
+      document.getElementById('snapshot-date').textContent = (DATA && DATA.snapshot_at) || '-';
+      renderCategoryGridCareer();
+    } else {
+      document.getElementById('cat-grid').innerHTML = '<p style="color:var(--muted)">불러오는 중...</p>';
+      loadYearlyData().then(function () {
+        if (!YEARLY) return;
+        document.getElementById('snapshot-date').textContent = YEARLY.generated_at || '-';
+        renderCategoryGridYearly();
+      });
+    }
+  }
+
+  function renderCategoryGridCareer() {
     var grid = document.getElementById('cat-grid');
     grid.innerHTML = '';
     Object.keys(DATA.categories).forEach(function (key) {
@@ -232,13 +293,47 @@
     });
   }
 
-  function startQuiz(key) {
-    var def = DATA.categories[key];
-    if (!def) return;
+  function renderCategoryGridYearly() {
+    var grid = document.getElementById('cat-grid');
+    grid.innerHTML = '';
+    Object.keys(YEARLY.categories).forEach(function (key) {
+      var cat = YEARLY.categories[key];
+      var btn = document.createElement('div');
+      btn.className = 'cat-btn';
+      btn.textContent = cat.label;
+      btn.dataset.key = key;
+      btn.addEventListener('click', function () { selectYearlyCategory(key); });
+      grid.appendChild(btn);
+    });
+  }
 
+  function selectYearlyCategory(key) {
+    currentYearlyKey = key;
     document.querySelectorAll('.cat-btn').forEach(function (b) {
       b.classList.toggle('active', b.dataset.key === key);
     });
+    var years = YEARLY.categories[key].years_available;
+    var sel = document.getElementById('year-select');
+    sel.innerHTML = years.map(function (y) { return '<option value="' + y + '">' + y + '년</option>'; }).join('');
+    sel.value = years[0];
+    startYearlyQuiz(key, years[0]);
+  }
+
+  function startYearlyQuiz(key, year) {
+    var def = YEARLY.categories[key].years[year];
+    if (!def) return;
+    startQuiz(key, def);
+  }
+
+  function startQuiz(key, defOverride) {
+    var def = defOverride || DATA.categories[key];
+    if (!def) return;
+
+    if (!defOverride) {
+      document.querySelectorAll('.cat-btn').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.key === key);
+      });
+    }
 
     var nameToSlots = {};
     def.slots.forEach(function (slot) {
@@ -473,6 +568,13 @@
       document.querySelectorAll('.time-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
     });
+  });
+  document.querySelectorAll('.mode-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { switchMode(btn.dataset.mode); });
+  });
+  document.getElementById('year-select').addEventListener('change', function () {
+    if (!currentYearlyKey) return;
+    startYearlyQuiz(currentYearlyKey, this.value);
   });
 
   loadData();
