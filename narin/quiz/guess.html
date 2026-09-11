@@ -92,10 +92,21 @@
   <div class="filter-row">
     <span class="filter-label">팀:</span>
     <select id="team-filter"><option value="">전체</option></select>
+  </div>
+  <div class="filter-row">
     <span class="filter-label">데뷔:</span>
-    <select id="debut-filter"><option value="">전체</option></select>
+    <select id="debut-from"><option value="">전체</option></select>
+    <span class="filter-label">~</span>
+    <select id="debut-to"><option value="">전체</option></select>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">은퇴(마지막 시즌):</span>
+    <select id="retire-from"><option value="">전체</option></select>
+    <span class="filter-label">~</span>
+    <select id="retire-to"><option value="">전체</option></select>
     <span class="filter-count" id="filter-count"></span>
   </div>
+  <p class="footer-note" id="retire-note" style="margin-bottom:1rem"></p>
 
   <div class="session-stats">
     <span>이번 세션 정답 <b id="session-solved">0</b>/<span id="session-total">0</span></span>
@@ -142,7 +153,10 @@
   var sessionSolved = 0;
   var sessionTotal = 0;
   var teamFilter = '';
-  var debutFilter = '';
+  var debutFrom = '';
+  var debutTo = '';
+  var retireFrom = '';
+  var retireTo = '';
 
   function normalize(name) {
     return name.replace(/\s+/g, '').toLowerCase();
@@ -162,6 +176,15 @@
       });
   }
 
+  function fillYearSelect(selectEl, years, suffix) {
+    years.forEach(function (y) {
+      var opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y + suffix;
+      selectEl.appendChild(opt);
+    });
+  }
+
   function populateFilters() {
     var teamSel = document.getElementById('team-filter');
     (DATA.all_teams || []).forEach(function (t) {
@@ -171,19 +194,23 @@
       teamSel.appendChild(opt);
     });
 
-    var debutSel = document.getElementById('debut-filter');
-    (DATA.debut_years || []).forEach(function (y) {
-      var opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y + '년 이후 데뷔';
-      debutSel.appendChild(opt);
-    });
+    fillYearSelect(document.getElementById('debut-from'), DATA.debut_years || [], '년');
+    fillYearSelect(document.getElementById('debut-to'), DATA.debut_years || [], '년');
+    fillYearSelect(document.getElementById('retire-from'), DATA.retire_years || [], '년');
+    fillYearSelect(document.getElementById('retire-to'), DATA.retire_years || [], '년');
+
+    document.getElementById('retire-note').textContent =
+      '※ 은퇴(마지막 시즌) 범위 끝을 ' + DATA.current_season + '년으로 두면, 아직 은퇴 안 하고 ' +
+      DATA.current_season + '년까지 뛴 현역 선수도 포함돼요.';
   }
 
   function filteredPool() {
     return DATA.players.filter(function (p) {
       if (teamFilter && p.teams.indexOf(teamFilter) === -1) return false;
-      if (debutFilter && p.debut_year < parseInt(debutFilter, 10)) return false;
+      if (debutFrom && p.debut_year < parseInt(debutFrom, 10)) return false;
+      if (debutTo && p.debut_year > parseInt(debutTo, 10)) return false;
+      if (retireFrom && p.retire_year < parseInt(retireFrom, 10)) return false;
+      if (retireTo && p.retire_year > parseInt(retireTo, 10)) return false;
       return true;
     });
   }
@@ -206,7 +233,10 @@
 
   function onFilterChange() {
     teamFilter = document.getElementById('team-filter').value;
-    debutFilter = document.getElementById('debut-filter').value;
+    debutFrom = document.getElementById('debut-from').value;
+    debutTo = document.getElementById('debut-to').value;
+    retireFrom = document.getElementById('retire-from').value;
+    retireTo = document.getElementById('retire-to').value;
     usedIds = [];
     nextQuestion();
   }
@@ -322,7 +352,10 @@
   });
   document.getElementById('next-btn').addEventListener('click', nextQuestion);
   document.getElementById('team-filter').addEventListener('change', onFilterChange);
-  document.getElementById('debut-filter').addEventListener('change', onFilterChange);
+  document.getElementById('debut-from').addEventListener('change', onFilterChange);
+  document.getElementById('debut-to').addEventListener('change', onFilterChange);
+  document.getElementById('retire-from').addEventListener('change', onFilterChange);
+  document.getElementById('retire-to').addEventListener('change', onFilterChange);
 
   loadData();
 })();
