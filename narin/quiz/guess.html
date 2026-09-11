@@ -32,6 +32,12 @@
     .session-stats { display: flex; gap: 1.4rem; font-size: 0.85rem; color: var(--muted); margin-bottom: 1.2rem; }
     .session-stats b { color: var(--text); }
 
+    .filter-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-row .filter-label { color: var(--muted); font-size: 0.85rem; }
+    .filter-row select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.7rem; color: var(--text); font-size: 0.9rem; }
+    .filter-row select:focus { outline: none; border-color: var(--accent); }
+    .filter-count { color: var(--dim); font-size: 0.8rem; }
+
     .clue-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; min-height: 120px; }
     .clue-panel .clue-empty { color: var(--dim); font-size: 0.9rem; }
     .clue-list { list-style: none; }
@@ -83,6 +89,14 @@
     데이터 기준일: <b id="snapshot-date">-</b>
   </p>
 
+  <div class="filter-row">
+    <span class="filter-label">팀:</span>
+    <select id="team-filter"><option value="">전체</option></select>
+    <span class="filter-label">데뷔:</span>
+    <select id="debut-filter"><option value="">전체</option></select>
+    <span class="filter-count" id="filter-count"></span>
+  </div>
+
   <div class="session-stats">
     <span>이번 세션 정답 <b id="session-solved">0</b>/<span id="session-total">0</span></span>
     <span>힌트 <b id="hint-used">0</b>개 사용</span>
@@ -127,6 +141,8 @@
   var ended = false;
   var sessionSolved = 0;
   var sessionTotal = 0;
+  var teamFilter = '';
+  var debutFilter = '';
 
   function normalize(name) {
     return name.replace(/\s+/g, '').toLowerCase();
@@ -138,6 +154,7 @@
       .then(function (json) {
         DATA = json;
         document.getElementById('snapshot-date').textContent = json.generated_at || '-';
+        populateFilters();
         nextQuestion();
       })
       .catch(function () {
@@ -145,16 +162,67 @@
       });
   }
 
+  function populateFilters() {
+    var teamSel = document.getElementById('team-filter');
+    (DATA.all_teams || []).forEach(function (t) {
+      var opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      teamSel.appendChild(opt);
+    });
+
+    var debutSel = document.getElementById('debut-filter');
+    (DATA.debut_years || []).forEach(function (y) {
+      var opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y + '년 이후 데뷔';
+      debutSel.appendChild(opt);
+    });
+  }
+
+  function filteredPool() {
+    return DATA.players.filter(function (p) {
+      if (teamFilter && p.teams.indexOf(teamFilter) === -1) return false;
+      if (debutFilter && p.debut_year < parseInt(debutFilter, 10)) return false;
+      return true;
+    });
+  }
+
+  function updateFilterCount(pool) {
+    document.getElementById('filter-count').textContent =
+      '조건에 맞는 선수 ' + pool.length + '명';
+  }
+
   function pickPlayer() {
-    if (usedIds.length >= DATA.players.length) usedIds = [];
-    var pool = DATA.players.filter(function (p) { return usedIds.indexOf(p.id) === -1; });
-    var pick = pool[Math.floor(Math.random() * pool.length)];
+    var pool = filteredPool();
+    updateFilterCount(pool);
+    if (!pool.length) return null;
+    if (usedIds.length >= pool.length) usedIds = [];
+    var remaining = pool.filter(function (p) { return usedIds.indexOf(p.id) === -1; });
+    var pick = remaining[Math.floor(Math.random() * remaining.length)];
     usedIds.push(pick.id);
     return pick;
   }
 
+  function onFilterChange() {
+    teamFilter = document.getElementById('team-filter').value;
+    debutFilter = document.getElementById('debut-filter').value;
+    usedIds = [];
+    nextQuestion();
+  }
+
   function nextQuestion() {
     current = pickPlayer();
+    if (!current) {
+      document.getElementById('clue-list').innerHTML = '<li class="clue-empty">이 조건에 맞는 선수가 없어요. 필터를 바꿔보세요.</li>';
+      document.getElementById('answer-banner').classList.remove('show');
+      document.getElementById('guess-input').disabled = true;
+      document.getElementById('guess-btn').disabled = true;
+      document.getElementById('hint-btn').disabled = true;
+      document.getElementById('giveup-btn').disabled = true;
+      document.getElementById('next-btn').style.display = 'none';
+      return;
+    }
     revealedCount = 1;
     solved = false;
     ended = false;
@@ -253,6 +321,8 @@
     }
   });
   document.getElementById('next-btn').addEventListener('click', nextQuestion);
+  document.getElementById('team-filter').addEventListener('change', onFilterChange);
+  document.getElementById('debut-filter').addEventListener('change', onFilterChange);
 
   loadData();
 })();
