@@ -126,8 +126,8 @@
 
 <div class="container">
   <p class="intro">
-    카테고리를 고르면 <b>TOP10(또는 TOP100)</b> 표가 뜬다. 이름은 가려져 있고, 순위·기록만 보인다.
-    선수 이름을 맞히면 그 줄이 공개된다. 공동 순위는 한 명씩 따로 맞혀야 한다. 힌트를 쓰면 컬럼이 하나씩 열린다.<br>
+    카테고리를 고르면 <b>TOP10(또는 TOP100)</b> 표가 떠요. 이름은 가려져 있고, 순위·기록만 보여요.
+    선수 이름을 맞히면 그 줄이 공개돼요. 공동 순위는 한 명씩 따로 맞혀야 해요. 힌트를 쓰면 컬럼이 하나씩 열려요.<br>
     데이터 기준일: <b id="snapshot-date">-</b>
   </p>
 
@@ -198,7 +198,7 @@
       </div>
     </div>
 
-    <p class="footer-note">전체 정답을 다 맞히거나 시간이 끝나면 결과가 표시된다. 새로고침하면 그 카테고리는 다시 시작된다 (로컬 진행상황 저장 없음).</p>
+    <p class="footer-note">전체 정답을 다 맞히거나 시간이 끝나면 결과가 표시돼요. 새로고침하면 그 카테고리는 다시 시작돼요 (로컬 진행상황은 저장 안 해요).</p>
   </div>
 </div>
 
@@ -486,7 +486,7 @@
     var slotIds = current.nameToSlots[key];
 
     if (!slotIds) {
-      showFeedback('"' + raw + '" 오답 또는 명단에 없음', false);
+      showFeedback('"' + raw + '" 오답이거나 명단에 없어요', false);
       input.value = '';
       input.focus();
       return;
@@ -504,7 +504,7 @@
     });
 
     if (newlySolved === 0) {
-      showFeedback('이미 맞힌 선수', false);
+      showFeedback('이미 맞힌 선수예요', false);
       input.value = '';
       return;
     }
@@ -538,7 +538,7 @@
     revealedCols.add(pick.key);
     hintCount++;
     document.getElementById('hint-left').textContent = MAX_HINTS - hintCount;
-    showFeedback('힌트: "' + pick.label + '" 컬럼 공개', true);
+    showFeedback('힌트: "' + pick.label + '" 컬럼을 공개했어요', true);
     renderTable();
     if (hintCount >= MAX_HINTS) document.getElementById('hint-btn').disabled = true;
   }
@@ -556,7 +556,7 @@
   });
   document.getElementById('giveup-btn').addEventListener('click', function () {
     if (!current || quizEndedState) return;
-    if (confirm('정말 포기할까? 못 맞힌 선수 이름이 전부 공개돼.')) {
+    if (confirm('정말 포기할까요? 못 맞힌 선수 이름이 전부 공개돼요.')) {
       endQuiz('giveup');
     }
   });
