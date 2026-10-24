@@ -100,3 +100,11 @@ tr.best td { background: rgba(143, 184, 255, 0.07); }
 .badge { font-size: 0.75rem; padding: 1px 7px; border-radius: 5px; background: #2a3044; color: #e6e9f2; font-weight: 600; }
 .tier { font-size: 0.75rem; }
 .note { font-size: 0.82rem; color: var(--muted); }
+.jackpot h3 { font-size: 0.95rem; margin: 4px 0 2px; }
+.jackpot .note { margin: 0 0 8px; }
+table.jp th, table.jp td { text-align: right; }
+table.jp th:nth-child(1), table.jp td:nth-child(1), table.jp th:nth-child(2), table.jp td:nth-child(2),
+table.jp th:nth-child(5), table.jp td:nth-child(5), table.jp th:nth-child(6), table.jp td:nth-child(6) { text-align: left; }
+.jp-items { white-space: normal; min-width: 220px; line-height: 1.9; }
+.badge { white-space: nowrap; }
+.jp-item { display: inline-block; white-space: nowrap; margin-right: 10px; }

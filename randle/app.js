@@ -156,6 +156,14 @@
     parts.push(`<div class="table-wrap"><table>
       <thead><tr><th>순위</th><th>결과 모양</th><th>리롤할 칸</th><th>기댓값 RP</th><th>확정보다 높을 확률</th><th>최대 RP</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`);
+    const jrows = res.jackpots.map(j => `<tr>
+      <td>${j.k}칸</td><td>${digitsHtml(I, j.mask)}</td><td class="num">${F.fmt(j.max)}</td><td class="num">${esc(F.odds(j.pMax))}</td>
+      <td>${j.example ? digitsHtml(j.example, 0) : '-'}</td>
+      <td class="jp-items">${j.items.slice(0, 3).map(it => `<span class="jp-item">${badge(it.prefix)} ${esc(helper.meta.defs[it.id].name)}</span>`).join('')}</td></tr>`).join('');
+    parts.push(`<div class="jackpot"><h3>칸 수별 대박</h3><p class="note">그 칸 수만큼 리롤할 때 노릴 수 있는 최고 점수와 그 확률, 그 점수가 나오는 숫자</p>
+      <div class="table-wrap"><table class="jp">
+      <thead><tr><th>칸 수</th><th>리롤할 칸</th><th>최고 RP</th><th>확률</th><th>나오면 대박인 숫자</th><th>주요 업적</th></tr></thead>
+      <tbody>${jrows}</tbody></table></div></div>`);
     const items = res.keep.items.map(it => `<li${it.counted ? '' : ' class="excluded"'}>${badge(it.prefix)}
       <span>${esc(helper.meta.defs[it.id].name)}</span>${tier(it.prefix, it.id)}
       <span class="score">${F.fmt(it.score)} RP${it.counted ? '' : ' · 합산 제외'}</span></li>`).join('');

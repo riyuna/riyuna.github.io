@@ -1220,7 +1220,33 @@ function subsetReduce(T, I, op, map = null) {
   return out;
 }
 
-module.exports = { subsetReduce };
+// 리롤 칸 집합마다 나올 수 있는 최고 점수와, 그 점수가 나오는 결과의 개수(확률 = 개수 / 10^칸 수)
+function subsetMaxCount(T, I) {
+  const max = new Float64Array(256), count = new Float64Array(256);
+  function rec(vals, cnts, off, j, mask) {
+    if (j === 8) {
+      max[mask] = vals[off];
+      count[mask] = cnts ? cnts[off] : 1;
+      return;
+    }
+    const size = BLOCK[j];
+    rec(vals, cnts, off + I[j] * size, j + 1, mask);
+    const mv = new Float32Array(size).fill(-Infinity), mc = new Uint32Array(size);
+    for (let b = 0; b < 10; b++) {
+      const base = off + b * size;
+      for (let k = 0; k < size; k++) {
+        const x = vals[base + k], c = cnts ? cnts[base + k] : 1;
+        if (x > mv[k]) { mv[k] = x; mc[k] = c; }
+        else if (x === mv[k]) mc[k] += c;
+      }
+    }
+    rec(mv, mc, 0, j + 1, mask | (1 << j));
+  }
+  rec(T, null, 0, 0, 0);
+  return { max, count };
+}
+
+module.exports = { subsetReduce, subsetMaxCount };
 
 };
 defs["digitdp"] = function (module, exports, require, __dirname, __filename) {
@@ -1541,7 +1567,7 @@ const { tablesFromShared } = require('./tables');
 const R = require('./rules');
 const S = require('./score');
 const { containsBounds } = require('./digitdp');
-const { subsetReduce } = require('./transform');
+const { subsetReduce, subsetMaxCount } = require('./transform');
 
 function kstToday() {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -1556,6 +1582,26 @@ const parseRoll = s => {
 };
 const rollStr = r => Array.from(r).join('');
 const rollValue = r => r.reduce((v, d) => v * 10 + d, 0);
+
+const popcount = m => { let n = 0; while (m) { m &= m - 1; n++; } return n; };
+
+// mask 칸을 바꾼 결과 중 점수가 target인 숫자 하나(원본 8칸)
+function exampleOf(T, I, mask, target) {
+  const free = [];
+  let base = 0;
+  for (let j = 0; j < 8; j++) {
+    const w = 10 ** (7 - j);
+    if ((mask >> j) & 1) free.push(w);
+    else base += I[j] * w;
+  }
+  const n = 10 ** free.length;
+  for (let idx = 0; idx < n; idx++) {
+    let v = base, x = idx;
+    for (let i = free.length - 1; i >= 0; i--) { v += (x % 10) * free[i]; x = Math.floor(x / 10); }
+    if (T[v] === target) return Int32Array.from(String(v).padStart(8, '0'), ch => ch.charCodeAt(0) - 48);
+  }
+  return null;
+}
 
 class Helper {
   // engine: { tables, query(q) }. meta/stats를 넘기지 않으면 data/ 파일에서 읽는다(Node).
@@ -1742,6 +1788,23 @@ class Helper {
     return bonus;
   }
 
+  // 칸 수(1~7)마다 노릴 수 있는 최고 점수: 그 점수가 가장 높은 칸 조합, 확률, 실제로 그 점수가 나오는 숫자 하나와 주요 업적.
+  // 8칸 전체는 강심장/승부사가 붙어 최고 점수를 정확히 구하지 않으므로 뺀다.
+  jackpots(T, I, options, prepared) {
+    const out = [];
+    for (let k = 1; k <= 7; k++) {
+      let pick = null;
+      for (const o of options) {
+        if (popcount(o.mask) !== k) continue;
+        if (!pick || o.max > pick.max || (o.max === pick.max && o.pMax > pick.pMax)) pick = o;
+      }
+      const example = exampleOf(T, I, pick.mask, pick.max);
+      const items = this.breakdown(example, prepared.ymd, prepared.hist, prepared.X).items.filter(it => it.counted);
+      out.push({ k, ...pick, example, items });
+    }
+    return out;
+  }
+
   async analyze(I, state) {
     const prepared = await this.prepare(state);
     const t0 = Date.now();
@@ -1752,13 +1815,14 @@ class Helper {
     const T = prepared.T;
     const ev = subsetReduce(T, I, 'mean');
     const better = subsetReduce(T, I, 'mean', x => (x > keep.total ? 1 : 0));
-    const best = subsetReduce(T, I, 'max');
+    const { max: best, count: bestCount } = subsetMaxCount(T, I);
     const heart = this.heartBonus(I, ymd, prepared);
     ev[255] += heart;
     const options = [];
-    for (let m = 1; m < 256; m++) options.push({ mask: m, ev: ev[m], pBetter: better[m], max: best[m] });
+    for (let m = 1; m < 256; m++) options.push({ mask: m, ev: ev[m], pBetter: better[m], max: best[m], pMax: bestCount[m] / 10 ** popcount(m) });
+    const jackpots = this.jackpots(T, I, options, prepared);
     options.sort((a, b) => b.ev - a.ev);
-    return { I, keep, options, heart, prepared, ms: Date.now() - t0 };
+    return { I, keep, options, jackpots, heart, prepared, ms: Date.now() - t0 };
   }
 }
 
@@ -1823,7 +1887,13 @@ function statusText(state) {
   return `직전 판 ${state.prev || '없음'} · 상승 ${state.asc || 1}연속 · 하락 ${state.desc || 1}연속 · 숫자별 연속 포함 [${st}] · 날짜 ${state.date || '오늘(한국 시간)'}`;
 }
 
-module.exports = { parseStreaks, fmt, pct, tierName, shape, slots, recordFinal, statusText };
+// 확률: 1% 이상은 퍼센트, 그보다 작으면 "1/N"
+function odds(p) {
+  if (!(p > 0)) return '0';
+  return p >= 0.01 ? pct(p) : '1/' + Math.round(1 / p).toLocaleString('ko-KR');
+}
+
+module.exports = { parseStreaks, fmt, pct, odds, tierName, shape, slots, recordFinal, statusText };
 
 };
   g.RandleCore = { require: req };
