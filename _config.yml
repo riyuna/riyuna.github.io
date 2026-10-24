@@ -268,4 +268,9 @@ defaults:
       comments: # true
       share: true
       related: true
+  # randle/ (개인용 도구): 사이트맵에서 제외
+  - scope:
+      path: "randle"
+    values:
+      sitemap: false
 

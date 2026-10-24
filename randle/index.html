@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<title>Randle Helper</title>
+<link rel="stylesheet" href="style.css?v=ee668f68e1c5">
+<script>
+  // SharedArrayBuffer를 쓰려면 cross-origin isolation이 필요하다. 서비스 워커(coi-sw.js)가 헤더를 붙인 뒤 한 번 새로고침한다.
+  (function () {
+    if (window.crossOriginIsolated) { sessionStorage.removeItem('coi-reload'); return; }
+    if (!window.isSecureContext || !('serviceWorker' in navigator)) return;
+    var tries = +(sessionStorage.getItem('coi-reload') || 0);
+    var reload = function () { if (tries < 2) { sessionStorage.setItem('coi-reload', String(tries + 1)); location.reload(); } };
+    navigator.serviceWorker.register('coi-sw.js').then(function () {
+      if (navigator.serviceWorker.controller) reload();
+      else navigator.serviceWorker.addEventListener('controllerchange', reload);
+    });
+  })();
+</script>
+</head>
+<body>
+<div class="wrap">
+  <section id="lock" class="lock">
+    <div class="lock-card">
+      <div class="brand">R<span>✦</span></div>
+      <h1>Randle Helper</h1>
+      <form id="lock-form" autocomplete="off">
+        <input id="pw" type="password" inputmode="numeric" placeholder="비밀번호" aria-label="비밀번호">
+        <button type="submit">열기</button>
+      </form>
+      <p id="lock-msg" class="muted small" role="status"></p>
+    </div>
+  </section>
+
+  <section id="app" hidden>
+    <header class="top">
+      <h1>Randle Helper</h1>
+      <button id="btn-lock" class="ghost" type="button">잠그기</button>
+    </header>
+    <div id="status" class="status"></div>
+
+    <div id="setup" class="banner" hidden>
+      <div class="banner-head"><span id="setup-text"></span><span id="setup-time" class="muted"></span></div>
+      <div class="bar"><div id="setup-bar"></div></div>
+      <p id="setup-note" class="muted small">처음 한 번만 걸립니다. 계산 결과(약 530MB)는 이 브라우저에 저장되어 다음부터는 몇 초 안에 열립니다.</p>
+    </div>
+    <div id="prep" class="prep" hidden>
+      <span id="prep-text"></span>
+      <div class="bar thin"><div id="prep-bar"></div></div>
+    </div>
+    <div id="error" class="banner error" role="alert" hidden></div>
+
+    <section class="card">
+      <h2>이번 판 숫자</h2>
+      <form id="roll-form" class="row" autocomplete="off">
+        <input id="roll" class="digits-input" inputmode="numeric" maxlength="8" placeholder="8칸 숫자" aria-label="이번 판 8칸 숫자">
+        <button id="btn-roll" type="submit" disabled>분석</button>
+      </form>
+      <div id="result"></div>
+    </section>
+
+    <section class="card">
+      <h2>확정 기록</h2>
+      <p class="muted small">확정한 숫자를 기록하면 다음 판의 직전 판이 되고, 그 기준 점수표를 바로 준비합니다.</p>
+      <form id="final-form" class="row" autocomplete="off">
+        <input id="final" class="digits-input" inputmode="numeric" maxlength="8" placeholder="확정한 숫자" aria-label="확정한 숫자">
+        <button id="btn-final" type="submit">기록</button>
+      </form>
+    </section>
+
+    <details class="card" id="settings">
+      <summary>기록·설정</summary>
+      <div class="grid">
+        <label>직전 판<input id="set-prev" inputmode="numeric" maxlength="8" placeholder="없음"></label>
+        <label>상승 연속<input id="set-asc" type="number" min="1"></label>
+        <label>하락 연속<input id="set-desc" type="number" min="1"></label>
+        <label>날짜<input id="set-date" inputmode="numeric" maxlength="8" placeholder="오늘(한국 시간)"></label>
+        <label class="wide">숫자별 연속 포함 (예: 0=3 5=9)<input id="set-streaks" placeholder="모름"></label>
+        <label>추천 표시 개수<input id="set-top" type="number" min="1" max="50"></label>
+        <label>'미정' 계열<select id="set-mijeong"><option value="separate">각자 합산</option><option value="group">한 계열로 묶음</option></select></label>
+      </div>
+      <div class="row">
+        <button id="btn-save" type="button">적용</button>
+        <button id="btn-clear" class="ghost" type="button">직전 판 지우기</button>
+        <button id="btn-cache" class="ghost danger" type="button">저장된 계산 지우기</button>
+      </div>
+    </details>
+  </section>
+</div>
+<script src="randle-core.js?v=ee668f68e1c5"></script>
+<script src="engine.js?v=ee668f68e1c5"></script>
+<script>window.RANDLE = { version: 'ee668f68e1c5', core: 'f9a829d9417a', pw: 'e00966c9b68c621565cde0d951720881e4aca10f5a27f222b3555a1a15d4104d' };</script>
+<script src="app.js?v=ee668f68e1c5"></script>
+</body>
+</html>
