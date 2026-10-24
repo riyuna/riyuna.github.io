@@ -108,3 +108,4 @@ table.jp th:nth-child(5), table.jp td:nth-child(5), table.jp th:nth-child(6), ta
 .jp-items { white-space: normal; min-width: 220px; line-height: 1.9; }
 .badge { white-space: nowrap; }
 .jp-item { display: inline-block; white-space: nowrap; margin-right: 10px; }
+.est { font-size: 0.7rem; color: var(--reroll); border: 1px solid var(--reroll); border-radius: 4px; padding: 0 4px; }

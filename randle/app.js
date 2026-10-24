@@ -165,10 +165,11 @@
       <thead><tr><th>칸 수</th><th>리롤할 칸</th><th>최고 RP</th><th>확률</th><th>나오면 대박인 숫자</th><th>주요 업적</th></tr></thead>
       <tbody>${jrows}</tbody></table></div></div>`);
     const items = res.keep.items.map(it => `<li${it.counted ? '' : ' class="excluded"'}>${badge(it.prefix)}
-      <span>${esc(helper.meta.defs[it.id].name)}</span>${tier(it.prefix, it.id)}
+      <span>${esc(helper.meta.defs[it.id].name)}</span>${tier(it.prefix, it.id)}${helper.meta.estimated.has(it.id) ? '<span class="est">추정</span>' : ''}
       <span class="score">${F.fmt(it.score)} RP${it.counted ? '' : ' · 합산 제외'}</span></li>`).join('');
     parts.push(`<details class="keep" open><summary>그대로 확정하면 <b>${F.fmt(keep)}</b> RP</summary><ul class="ach">${items}</ul></details>`);
     const notes = [];
+    if (helper.meta.estimated.size) notes.push(`'추정' 표시 업적 ${helper.meta.estimated.size}종은 게임이 점수를 공개하지 않아 공식으로 추정한 점수입니다.`);
     if (res.heart > 0) notes.push(`8칸 전체 리롤 기댓값에는 강심장/승부사 보정 +${F.fmt(res.heart)} RP(근사)가 포함되어 있습니다.`);
     notes.push(`점수표 준비 ${(res.prepared.ms / 1000).toFixed(1)}초 · 분석 ${(res.ms / 1000).toFixed(1)}초`);
     parts.push(`<p class="note">${notes.map(esc).join('<br>')}</p>`);

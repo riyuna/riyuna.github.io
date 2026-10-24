@@ -47,7 +47,7 @@ function saveConfig(cfg) {
 const PX = Object.fromEntries(PREFIXES.map((p, i) => [p, i]));
 const MAX_ID = 512;
 // 날짜에 따라 조건이 바뀌는 업적: 기본 점수표에서 빼고 매번 계산한다.
-const DATE_IDS = [65, 66, 67, 68];
+const DATE_IDS = [65, 66, 67, 68, 326];
 
 function loadMeta(file = DATA_FILE) {
   return buildMeta(JSON.parse(fs.readFileSync(file, 'utf8')), loadConfig());
@@ -102,7 +102,9 @@ function buildMeta(raw, config = { mijeong: 'separate' }) {
   for (const id of live) if (defs[id].history) isHistory[id] = 1;
   for (const id of DATE_IDS) if (defs[id]) isDate[id] = 1;
 
-  return { raw, defs, live, sc, famIndex, families, famName, mn, mx, lo, up, isHistory, isDate, date: raw.date, config };
+  // 최신 데이터에서 합친 업적: 점수가 추정치(tools/merge-live.js)
+  const estimated = new Set((raw.estimated && raw.estimated.ids) || []);
+  return { raw, defs, live, sc, famIndex, families, famName, mn, mx, lo, up, isHistory, isDate, estimated, date: raw.date, config };
 }
 
 const displayPrefix = p => DISPLAY_PREFIX[p] || p;
@@ -153,6 +155,55 @@ function buildNumberTheory() {
   for (let v = 0; v < N; v++) if (sq[v]) setBit(squareful, v);
 
   return { prime, omega, squareful };
+}
+
+// #332 과잉수, #334 괴짜수(과잉수이면서 진약수 일부의 합으로 자신을 못 만듦), #335 소수 기반 암호(모든 소인수 ≥101, 2종 이상).
+// 가장 작은 소인수 표(16비트: 1억 미만에서 65536 이상이 될 수 있는 건 소수 자신뿐이라 0으로 둔다)로 약수 합을 곱셈적으로 구한다.
+function buildDivisorTables() {
+  const spf = new Uint16Array(N);
+  for (let i = 2; i < 65536; i++) if (spf[i] === 0) for (let j = i; j < N; j += i) if (spf[j] === 0) spf[j] = i;
+  const sigma = new Uint32Array(N);
+  sigma[1] = 1;
+  const abundant = new Uint8Array(BYTES), crypt = new Uint8Array(BYTES);
+  for (let n = 2; n < N; n++) {
+    const p = spf[n] || n;
+    let x = n, pk = 1, sp = 1;
+    while (x % p === 0) { x /= p; pk *= p; sp += pk; }
+    sigma[n] = sigma[x] * sp;
+    if (sigma[n] > 2 * n) setBit(abundant, n);
+    if (p >= 101 && x > 1) setBit(crypt, n); // 가장 작은 소인수가 101 이상이고 다른 소인수도 있음
+  }
+  // 반완전수: 진약수 일부의 합이 자신. 반완전수의 배수도 반완전수이므로 배수는 표시만 하고, 나머지 과잉수만 부분합을 찾는다.
+  const semi = new Uint8Array(N);
+  for (let n = 2; n < N; n++) if (sigma[n] === 2 * n) for (let m = n; m < N; m += n) semi[m] = 1;
+  const weird = new Uint8Array(BYTES);
+  const divs = new Float64Array(4096), suf = new Float64Array(4097);
+  let k = 0;
+  const dfs = (i, rem) => {
+    if (rem === 0) return true;
+    if (i === k || suf[i] < rem) return false;
+    if (divs[i] <= rem && dfs(i + 1, rem - divs[i])) return true;
+    return dfs(i + 1, rem);
+  };
+  for (let n = 2; n < N; n++) {
+    if (semi[n] || !getBit(abundant, n)) continue;
+    let x = n;
+    divs[0] = 1;
+    k = 1;
+    while (x > 1) {
+      const p = spf[x] || x, base = k;
+      let pw = 1;
+      while (x % p === 0) { x /= p; pw *= p; for (let b = 0; b < base; b++) divs[k++] = divs[b] * pw; }
+    }
+    const arr = Array.from(divs.subarray(0, k)).filter(d => d !== n).sort((a, b) => b - a);
+    k = arr.length;
+    for (let i = 0; i < k; i++) divs[i] = arr[i];
+    suf[k] = 0;
+    for (let i = k - 1; i >= 0; i--) suf[i] = suf[i + 1] + divs[i];
+    if (dfs(0, n)) for (let m = n; m < N; m += n) semi[m] = 1;
+    else setBit(weird, n);
+  }
+  return { abundant, weird, crypt };
 }
 
 // #231 오름차순 정렬 / #232 내림차순 정렬: 4개 이상의 엄격 증가(감소) 분할이 가능한 수.
@@ -331,6 +382,7 @@ function packSpecial(sets) {
 const TABLE_TYPES = {
   prime: Uint8Array, omega: Uint8Array, squareful: Uint8Array, asc: Uint8Array, desc: Uint8Array,
   specBits: Uint8Array, specValues: Int32Array, specOffs: Int32Array, specIds: Int16Array,
+  abundant: Uint8Array, weird: Uint8Array, crypt: Uint8Array,
 };
 
 function buildTables(raw, log = () => {}) {
@@ -338,12 +390,15 @@ function buildTables(raw, log = () => {}) {
   const nt = buildNumberTheory();
   log(`  소수·소인수·제곱인수 테이블 ${((Date.now() - t) / 1000).toFixed(1)}초`);
   t = Date.now();
+  const div = buildDivisorTables();
+  log(`  과잉수·괴짜수·소수 기반 암호 테이블 ${((Date.now() - t) / 1000).toFixed(1)}초`);
+  t = Date.now();
   const sort = buildSortBits();
   log(`  오름/내림차순 분할 테이블 ${((Date.now() - t) / 1000).toFixed(1)}초`);
   t = Date.now();
   const spec = packSpecial(buildSpecialSets(raw));
   log(`  특수 수 집합 ${spec.specValues.length.toLocaleString()}개 ${((Date.now() - t) / 1000).toFixed(1)}초`);
-  return { ...nt, ...sort, ...spec };
+  return { ...nt, ...div, ...sort, ...spec };
 }
 
 function saveTables(dir, tables) {
@@ -446,6 +501,10 @@ const CONTAINS = [
   [308, '0246'], [308, '2468'], [308, '4680'], [308, '6420'], [308, '8642'], [308, '0864'],
   [309, '1357'], [309, '3579'], [309, '7531'], [309, '9753'], [310, '13579'], [310, '97531'],
   [414, '1336'], [421, '393939'],
+  [337, '173'], [338, '1732'], [343, '223'], [344, '2236'], [349, '264'], [350, '2645'], [351, '26457'],
+  // #355 마인크래프트: Java Edition 정식 릴리즈 버전(점 제거)을 포함. 1.x는 대부분 10·11·15·18·19·12x로 덮이므로 최소 패턴만 둔다.
+  // 서버의 고정 목록은 성립 개수로 정확히 특정되지 않아 1.0~1.21.x와 26.1~26.3으로 근사(성립 개수 약 1% 부족).
+  [355, '10'], [355, '11'], [355, '121'], [355, '122'], [355, '123'], [355, '124'], [355, '125'], [355, '131'], [355, '132'], [355, '142'], [355, '144'], [355, '145'], [355, '146'], [355, '147'], [355, '15'], [355, '151'], [355, '152'], [355, '161'], [355, '162'], [355, '164'], [355, '172'], [355, '174'], [355, '175'], [355, '176'], [355, '177'], [355, '178'], [355, '179'], [355, '1710'], [355, '18'], [355, '19'], [355, '120'], [355, '121'], [355, '1211'], [355, '261'], [355, '262'], [355, '263'],
   [500, '24'], [501, '7'], // #177 Lo-Fi Music 보조
 ];
 
@@ -489,7 +548,8 @@ function buildAC(patterns) {
 const WINDOW_IDS = [1, 2, 3, 5, 45, 46, 47, 48, 4, 285, 11, 56, 302, 6, 7, 8, 9, ...Array.from({ length: 9 }, (_, i) => 27 + i),
   ...Array.from({ length: 10 }, (_, i) => 121 + i), 153, 296, 297, 298, 299, 150, ...Array.from({ length: 14 }, (_, i) => 154 + i),
   ...new Set(CONTAINS.map(([t]) => t).filter(t => t < 500)), 177, 131, 133, 134, 135, 137, 139, 282,
-  ...Array.from({ length: 11 }, (_, i) => 313 + i), 66, 67, 68];
+  ...Array.from({ length: 11 }, (_, i) => 313 + i), 66, 67, 68,
+  324, 325, 327, 331, 336, 337, 338, 343, 344, 349, 350, 351, 355];
 
 const SPECIAL_IDS = [37, 61, 62, 63, 64, 87, 88, 89, 90, 91, 92, 93, 71, 72, 148, 212, 214, 218, 219, 223, 236, 237, 295, 305, 312,
   422, 280, 38, 39, 108, 109, 110, 111, 112, 113, 114, 40, 41, 42, 202, 203, 204, 228, 229, 230, 58, 59, 60, 120, 238, 239,
@@ -769,6 +829,7 @@ function staticGroups(T) {
       }
       for (let k = specOffs[lo]; k < specOffs[lo + 1]; k++) { mk[specIds[k]] = c.SIG; dirty[nd++] = specIds[k]; }
     });
+    G[G.length - 1].init = mk => { for (const id of SPECIAL_IDS) mk[id] = 0; nd = 0; };
   }
 
   G.push(containsGroup(CONTAINS));
@@ -921,6 +982,66 @@ function staticGroups(T) {
     mk[319] = m319; mk[320] = m320; mk[321] = m321; mk[322] = m322; mk[323] = m323;
   });
 
+  // 최신 데이터(randle_live.json)에서 알게 된 업적
+  const { abundant, weird, crypt } = T;
+  const pv = new Float64Array(64), pmk = new Int32Array(64);
+  group('newer', [324, 325, 327, 328, 330, 331, 332, 334, 335, 336], (c, mk) => {
+    const r = c.r, st = c.st, L = c.L, S = c.SIG, cnt = c.cnt, v = c.v;
+    // #324 거대한 수미상관: 4자리 이상, 앞 두 자리 = 뒤 두 자리
+    mk[324] = L >= 4 && r[st] === r[6] && r[st + 1] === r[7] ? (3 << st) | 192 : 0;
+    // #325 시상대: 가장 큰 서로 다른 숫자 셋이 한 번씩만, 서로 이웃하지 않음
+    let m325 = 0;
+    if (c.distinct >= 3) {
+      let got = 0, ok = true;
+      for (let d = 9; d >= 0 && got < 3; d--) {
+        if (!cnt[d]) continue;
+        if (cnt[d] !== 1) { ok = false; break; }
+        m325 |= c.pm[d];
+        got++;
+      }
+      if (!ok || (m325 & (m325 << 1)) !== 0) m325 = 0;
+    }
+    mk[325] = m325;
+    // #327 디지털 시계: HHMMSS(00:00:00~23:59:59) 연속 6칸, 가장 왼쪽 구간
+    let m327 = 0;
+    for (let i = st; i + 6 <= 8; i++) {
+      if (r[i] * 10 + r[i + 1] <= 23 && r[i + 2] <= 5 && r[i + 4] <= 5) { m327 = 63 << i; break; }
+    }
+    mk[327] = m327;
+    // #328 녹일색: 2·3·4·6·8로만
+    mk[328] = cnt[2] + cnt[3] + cnt[4] + cnt[6] + cnt[8] === L ? S : 0;
+    // #330 끝말잇기: 둘로 나눠 앞 시작 = 뒤 끝, 앞 끝 = 뒤 시작
+    let m330 = 0;
+    if (L >= 2 && r[st] === r[7]) for (let i = st; i < 7; i++) if (r[i] === r[i + 1]) { m330 = S; break; }
+    mk[330] = m330;
+    // #331 연속된 두자리: 붙은 두 자리 수 둘(10~99)의 차이가 1, 가장 왼쪽 구간
+    let m331 = 0;
+    for (let i = st; i + 4 <= 8; i++) {
+      if (!r[i] || !r[i + 2]) continue;
+      const a = r[i] * 10 + r[i + 1], b = r[i + 2] * 10 + r[i + 3];
+      if (a - b === 1 || b - a === 1) { m331 = 15 << i; break; }
+    }
+    mk[331] = m331;
+    mk[332] = getBit(abundant, v) ? S : 0;
+    mk[334] = getBit(weird, v) ? S : 0;
+    mk[335] = getBit(crypt, v) ? S : 0;
+    // #336 쌍둥이 소수: 겹치지 않는 두 구간이 차이 2인 소수 (앞자리 0 없는 구간만)
+    let np = 0;
+    for (let i = st; i < 8; i++) {
+      if (r[i] === 0) continue;
+      let val = 0;
+      for (let j = i; j < 8; j++) {
+        val = val * 10 + r[j];
+        if (getBit(T.prime, val)) { pv[np] = val; pmk[np] = ((1 << (j - i + 1)) - 1) << i; np++; }
+      }
+    }
+    let m336 = 0;
+    for (let a = 0; a < np && !m336; a++) for (let b = a + 1; b < np; b++) {
+      if ((pmk[a] & pmk[b]) === 0 && (pv[a] - pv[b] === 2 || pv[b] - pv[a] === 2)) { m336 = pmk[a] | pmk[b]; break; }
+    }
+    mk[336] = m336;
+  });
+
   return G;
 }
 
@@ -932,8 +1053,10 @@ function containsGroup(patterns) {
   const ids = [...new Set(patterns.map(([t]) => t).filter(t => t < 500))];
   const lofi = patterns.some(([t]) => t === 500);
   if (lofi) ids.push(177);
+  const allTags = [...new Set(patterns.map(([t]) => t))];
   return {
     name: 'contains', ids,
+    init: mk => { for (const t of allTags) mk[t] = 0; if (lofi) mk[177] = 0; nd = 0; },
     fn: (c, mk) => {
       while (nd > 0) mk[dirty[--nd]] = 0;
       const r = c.r;
@@ -952,11 +1075,19 @@ function containsGroup(patterns) {
 }
 
 // 오늘 날짜(한국 시간)에 따라 바뀌는 업적. ymd = 'YYYYMMDD'
+const DIM = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+function validYmd(v) {
+  const y = Math.floor(v / 1e4), m = Math.floor(v / 100) % 100, d = v % 100;
+  if (m < 1 || m > 12 || d < 1) return false;
+  const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  return d <= (m === 2 && leap ? 29 : DIM[m]);
+}
+
 function dateGroup(ymd) {
   const target = +ymd, y = +ymd.slice(0, 4), m0 = +ymd[4], m1 = +ymd[5], d0 = +ymd[6], d1 = +ymd[7];
   const y0 = +ymd[0], y1 = +ymd[1], y2 = +ymd[2], y3 = +ymd[3];
   return {
-    name: 'date', ids: [65, 66, 67, 68],
+    name: 'date', ids: [65, 66, 67, 68, 326],
     fn: (c, mk) => {
       const r = c.r, st = c.st;
       mk[65] = c.v === target ? 255 : 0;
@@ -968,6 +1099,8 @@ function dateGroup(ymd) {
         if (i + 3 < 8 && a === y0 && b === y1 && r[i + 2] === y2 && r[i + 3] === y3) my |= 15 << i;
       }
       mk[66] = y >= 1000 ? my : 0;
+      // #326 시간 여행: 8자리 전체가 유효한 YYYYMMDD이고 오늘이 아님
+      mk[326] = st === 0 && c.v !== target && validYmd(c.v) ? 255 : 0;
       mk[67] = mm;
       mk[68] = md;
     },
@@ -1005,7 +1138,7 @@ function historyGroup(h, defs) {
   };
 }
 
-module.exports = { makeCtx, features, setValue, staticGroups, dateGroup, historyGroup, containsGroup, digitsOf, SPECIAL_IDS, CONTAINS, WINDOW_IDS };
+module.exports = { validYmd, makeCtx, features, setValue, staticGroups, dateGroup, historyGroup, containsGroup, digitsOf, SPECIAL_IDS, CONTAINS, WINDOW_IDS };
 
 };
 defs["score"] = function (module, exports, require, __dirname, __filename) {
@@ -1428,6 +1561,7 @@ function step() {
 function runBuild({ lo, hi, F0, validateDate }) {
   const out = new Float32Array(F0);
   const groups = statics.concat([R.dateGroup(validateDate)]);
+  for (const g of groups) if (g.init) g.init(mk);
   const fns = groups.map(g => g.fn);
   const ids = Int32Array.from(groups.flatMap(g => g.ids));
   const isWin = new Uint8Array(MAX_ID);
@@ -1509,11 +1643,52 @@ function runQuery(q) {
   return { sumCtx, cntCtx };
 }
 
+// 새 업적 조사: 성립 개수·최솟값·최댓값, Σ0.19^(성립 자리 수)(회귀 확률 추정용), 성립 숫자열 분포(승부사 확률용)
+function runProbe({ lo, hi, ids, date }) {
+  const want = new Set(ids);
+  const groups = statics.filter(g => g.ids.some(id => want.has(id))).concat([R.dateGroup(date)]);
+  for (const g of groups) if (g.init) g.init(mk);
+  const fns = groups.map(g => g.fn);
+  const list = Int32Array.from(ids);
+  const count = new Float64Array(MAX_ID), sum019 = new Float64Array(MAX_ID);
+  const vmin = new Float64Array(MAX_ID).fill(Infinity), vmax = new Float64Array(MAX_ID).fill(-Infinity);
+  // 성립 숫자열 분포는 일부 칸 성립 업적만(숫자 전체 성립이면 승부사 확률이 q×10⁻⁸로 정해짐)
+  const win = new Set(R.WINDOW_IDS);
+  const keyMaps = new Map(ids.map(id => [id, win.has(id) ? new Map() : null]));
+  const pow019 = Float64Array.from({ length: 9 }, (_, m) => 0.19 ** m);
+  startAt(lo);
+  for (let v = lo; v < hi; v++) {
+    if (v !== lo) step();
+    c.v = v;
+    R.features(c);
+    for (let g = 0; g < fns.length; g++) fns[g](c, mk);
+    for (let k = 0; k < list.length; k++) {
+      const id = list[k], m = mk[id];
+      if (m === 0) continue;
+      count[id]++;
+      if (v < vmin[id]) vmin[id] = v;
+      vmax[id] = v;
+      let bits = 0;
+      for (let x = m; x; x &= x - 1) bits++;
+      sum019[id] += pow019[bits];
+      const km = keyMaps.get(id);
+      if (km !== null) {
+        const key = S.packKey(c.r, m), n = km.get(key);
+        if (n !== undefined) km.set(key, n + 1);
+        else if (km.size < KEY_CAP) km.set(key, 1);
+        else keyMaps.set(id, null);
+      }
+    }
+  }
+  return { lo, hi, count, vmin, vmax, sum019, keyMaps };
+}
+
 // 검증용: 8칸 전체 리롤에서 강심장/승부사가 더하는 점수의 정확한 합 (직전 판 문맥 포함)
 function runHeart(q) {
   const groups = statics.slice();
   groups.push(R.dateGroup(q.dynamic.date));
   for (const [id, b] of Object.entries(q.bounds)) { A.mn[id] = b.min; A.mx[id] = b.max; A.lo[id] = b.lower; A.up[id] = b.upper; }
+  for (const g of groups) if (g.init) g.init(mk);
   const fns = groups.map(g => g.fn);
   const X = { noReroll: false, pk: Float64Array.from(q.ctx.pk), pm: Int32Array.from(q.ctx.pm), hk: Float64Array.from(q.hk) };
   const fams = meta.families.filter(f => f.some(id => X.hk[id] >= 0));
@@ -1541,14 +1716,14 @@ function runHeart(q) {
   return { sum };
 }
 
-return { runBuild, runQuery, runHeart };
+return { runBuild, runQuery, runHeart, runProbe };
 }
 
 if (!isMainThread && parentPort) {
   const sweeper = createSweeper(workerData.dataFile, workerData.tables);
   parentPort.on('message', msg => {
     try {
-      const res = msg.task === 'build' ? sweeper.runBuild(msg) : msg.task === 'heart' ? sweeper.runHeart(msg) : sweeper.runQuery(msg);
+      const res = msg.task === 'build' ? sweeper.runBuild(msg) : msg.task === 'heart' ? sweeper.runHeart(msg) : msg.task === 'probe' ? sweeper.runProbe(msg) : sweeper.runQuery(msg);
       parentPort.postMessage({ id: msg.id, ok: true, res });
     } catch (e) {
       parentPort.postMessage({ id: msg.id, ok: false, error: e.stack || String(e) });
@@ -1603,6 +1778,17 @@ function exampleOf(T, I, mask, target) {
   return null;
 }
 
+// #326 시간 여행(오늘이 아닌 유효한 8자리 날짜)의 성립값 순위 경계
+function travelBounds(today) {
+  const vals = [];
+  for (let y = 1000; y <= 9999; y++) for (let m = 1; m <= 12; m++) for (let d = 1; d <= 31; d++) {
+    const v = y * 10000 + m * 100 + d;
+    if (v !== today && R.validYmd(v)) vals.push(v);
+  }
+  const n = vals.length, k = Math.floor(n / 10);
+  return { count: n, min: vals[0], max: vals[n - 1], lower: vals[k - 1], upper: vals[n - k] };
+}
+
 class Helper {
   // engine: { tables, query(q) }. meta/stats를 넘기지 않으면 data/ 파일에서 읽는다(Node).
   constructor(engine, { meta, stats } = {}) {
@@ -1624,6 +1810,7 @@ class Helper {
   dateBounds(ymd) {
     if (!this.boundsCache.has(ymd)) {
       const b = { 66: containsBounds(ymd.slice(0, 4)), 67: containsBounds(ymd.slice(4, 6)), 68: containsBounds(ymd.slice(6, 8)) };
+      if (this.meta.defs[326]) b[326] = travelBounds(+ymd);
       this.boundsCache.set(ymd, b);
     }
     return this.boundsCache.get(ymd);
