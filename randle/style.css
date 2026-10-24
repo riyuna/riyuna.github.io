@@ -10,11 +10,12 @@
   --reroll: #ffb86b;
   --good: #7ee0a1;
   --bad: #ff7b7b;
-  --mono: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  --sans: "Pretendard", "Segoe UI", "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", monospace;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); }
-body { font: 15px/1.55 "Pretendard", "Segoe UI", "Malgun Gothic", system-ui, sans-serif; }
+body { font: 15px/1.55 var(--sans); }
 .wrap { max-width: 960px; margin: 0 auto; padding: 20px 16px 64px; }
 h1 { font-size: 1.35rem; margin: 0; letter-spacing: -0.01em; }
 h2 { font-size: 1.02rem; margin: 0 0 12px; }
@@ -36,6 +37,7 @@ input, select {
 input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .digits-input { font-family: var(--mono); font-size: 1.35rem; letter-spacing: 0.3em; width: 14ch; flex: 0 1 auto; }
+.digits-input::placeholder, .lock-card input::placeholder { font-family: var(--sans); font-size: 0.95rem; letter-spacing: 0; }
 
 /* 잠금 화면 */
 .lock { min-height: 70vh; display: grid; place-items: center; }
@@ -48,7 +50,7 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1p
 .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .status { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 0.82rem; color: var(--muted); }
-.chip b { color: var(--text); font-weight: 600; font-family: var(--mono); }
+.chip b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
 details.card > summary { cursor: pointer; font-weight: 600; }
