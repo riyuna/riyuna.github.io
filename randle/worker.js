@@ -24,6 +24,7 @@ self.onmessage = e => {
     else if (msg.task === 'tables') res = share(buildTables(msg.raw, text => self.postMessage({ log: text })));
     else if (msg.task === 'build') res = sweeper.runBuild(msg);
     else if (msg.task === 'query') res = sweeper.runQuery(msg);
+    else if (msg.task === 'rare') res = sweeper.runRare(msg);
     else throw new Error('알 수 없는 작업: ' + msg.task);
     self.postMessage({ id: msg.id, ok: true, res });
   } catch (err) {

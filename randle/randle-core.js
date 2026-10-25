@@ -1508,7 +1508,25 @@ function statsFromBuild(meta, { count, sumBase, keys }) {
   return out;
 }
 
-module.exports = { N, CHUNKS, chunks, mergeBuild, mergeQuery, statsFromBuild };
+// 희귀 업적 찬스용: 1~maxK칸 리롤 조합을 작업 단위로 나눈다(4칸은 조합 하나가 1만 개라 하나씩)
+function rareTasks(maxK = 4) {
+  const byK = [];
+  for (let m = 1; m < 256; m++) { let k = 0; for (let x = m; x; x &= x - 1) k++; if (k <= maxK) (byK[k] = byK[k] || []).push(m); }
+  const tasks = [];
+  for (let k = 1; k <= maxK; k++) {
+    const per = Math.max(1, Math.floor(10000 / 10 ** k));
+    for (let i = 0; i < byK[k].length; i += per) tasks.push(byK[k].slice(i, i + per));
+  }
+  return tasks;
+}
+
+function mergeCounts(results) {
+  const counts = new Map();
+  for (const r of results) for (const [k, n] of r.counts) counts.set(k, (counts.get(k) || 0) + n);
+  return counts;
+}
+
+module.exports = { N, CHUNKS, chunks, mergeBuild, mergeQuery, statsFromBuild, rareTasks, mergeCounts };
 
 };
 defs["worker"] = function (module, exports, require, __dirname, __filename) {
@@ -1683,6 +1701,64 @@ function runProbe({ lo, hi, ids, date }) {
   return { lo, hi, count, vmin, vmax, sum019, keyMaps };
 }
 
+// 희귀 업적 찬스: 리롤할 칸 집합(masks)마다 모든 결과를 판정해, 등급이 minTier 이상인 (접두사, 업적)을 딴 결과 수를 센다.
+// 접두사 규칙은 화면용 ctxCandidates와 같다(리롤했으므로 단판 없음, 4칸 이하라 강심장/승부사 없음). 모든 접두사가 따로 수집된다.
+const PIDX = Object.fromEntries(require('./meta').PREFIXES.map((p, i) => [p, i]));
+function runRare(q) {
+  const groups = statics.concat([R.dateGroup(q.dynamic.date)]);
+  if (q.dynamic.history) {
+    const h = q.dynamic.history;
+    groups.push(R.historyGroup({ ...h, prev: Int32Array.from(h.prev), streaks: h.streaks && Int32Array.from(h.streaks) }, meta.defs));
+  }
+  for (const g of groups) if (g.init) g.init(mk);
+  const fns = groups.map(g => g.fn);
+  for (const [id, b] of Object.entries(q.bounds)) { A.mn[id] = b.min; A.mx[id] = b.max; A.lo[id] = b.lower; A.up[id] = b.upper; }
+  const pk = Float64Array.from(q.ctx.pk), pm = Int32Array.from(q.ctx.pm);
+  const tier = new Int8Array(16 * MAX_ID).fill(-1);
+  for (const [p, row] of Object.entries(meta.raw.rarityByPrefix)) for (const [id, t] of Object.entries(row)) tier[PIDX[p] * MAX_ID + +id] = t;
+  const ids = Int32Array.from(meta.live.filter(id => PREFIX_KEYS.some(p => tier[PIDX[p] * MAX_ID + id] >= q.minTier)));
+  const I = q.I, r = c.r;
+  const counts = new Map();
+  const inc = (mask, p, id) => { const k = mask * 8192 + p * MAX_ID + id; counts.set(k, (counts.get(k) || 0) + 1); };
+  const X = { BASE: PIDX['기본'], ORI: PIDX['태초'], LIM: PIDX['극한'], DAWN: PIDX['여명'], PEAK: PIDX['절정'], CHAIN: PIDX['연쇄'], JAE: PIDX['재현'], DONG: PIDX['동형'], REG: PIDX['회귀'], SPEC: PIDX['스페셜'] };
+  const ok = (arr, id) => arr[id] === arr[id];
+  for (const mask of q.masks) {
+    const free = [];
+    for (let j = 0; j < 8; j++) if ((mask >> j) & 1) free.push(j);
+    const n = 10 ** free.length;
+    for (let idx = 0; idx < n; idx++) {
+      for (let j = 0; j < 8; j++) r[j] = I[j];
+      for (let i = free.length - 1, x = idx; i >= 0; i--, x = Math.floor(x / 10)) r[free[i]] = x % 10;
+      let v = 0;
+      for (let j = 0; j < 8; j++) v = v * 10 + r[j];
+      c.v = v;
+      R.features(c);
+      for (let g = 0; g < fns.length; g++) fns[g](c, mk);
+      for (let k = 0; k < ids.length; k++) {
+        const id = ids[k], m = mk[id];
+        if (m === 0) continue;
+        if (meta.isHistory[id]) { if (tier[X.SPEC * MAX_ID + id] >= q.minTier) inc(mask, X.SPEC, id); continue; }
+        let other = false, minmax = false;
+        const take = p => { if (tier[p * MAX_ID + id] >= q.minTier) inc(mask, p, id); };
+        if (v === A.mn[id] && ok(A.ori, id)) { take(X.ORI); other = minmax = true; }
+        if (v === A.mx[id] && ok(A.lim, id)) { take(X.LIM); other = minmax = true; }
+        if (v <= A.lo[id] && v !== A.mn[id] && ok(A.dawn, id)) { take(X.DAWN); other = true; }
+        if (v >= A.up[id] && v !== A.mx[id] && ok(A.peak, id)) { take(X.PEAK); other = true; }
+        if (pk[id] >= 0) {
+          const key = S.packKey(r, m), sd = key === pk[id], sp = m === pm[id];
+          let p = sd && sp ? X.REG : sd ? X.JAE : sp ? X.DONG : X.CHAIN;
+          const arr = [A.chain, A.jae, A.dong, A.reg][[X.CHAIN, X.JAE, X.DONG, X.REG].indexOf(p)];
+          if (!ok(arr, id)) p = X.CHAIN;
+          if (ok(A.chain, id) || p !== X.CHAIN) { take(p); other = true; }
+        }
+        if (!other || minmax) take(X.BASE);
+      }
+    }
+  }
+  return { counts };
+}
+const PREFIX_KEYS = ['기본', '연쇄', '재현', '동형', '회귀', '여명', '태초', '절정', '극한', '스페셜'];
+
 // 검증용: 8칸 전체 리롤에서 강심장/승부사가 더하는 점수의 정확한 합 (직전 판 문맥 포함)
 function runHeart(q) {
   const groups = statics.slice();
@@ -1716,14 +1792,14 @@ function runHeart(q) {
   return { sum };
 }
 
-return { runBuild, runQuery, runHeart, runProbe };
+return { runBuild, runQuery, runHeart, runProbe, runRare };
 }
 
 if (!isMainThread && parentPort) {
   const sweeper = createSweeper(workerData.dataFile, workerData.tables);
   parentPort.on('message', msg => {
     try {
-      const res = msg.task === 'build' ? sweeper.runBuild(msg) : msg.task === 'heart' ? sweeper.runHeart(msg) : msg.task === 'probe' ? sweeper.runProbe(msg) : sweeper.runQuery(msg);
+      const res = msg.task === 'build' ? sweeper.runBuild(msg) : msg.task === 'heart' ? sweeper.runHeart(msg) : msg.task === 'probe' ? sweeper.runProbe(msg) : msg.task === 'rare' ? sweeper.runRare(msg) : sweeper.runQuery(msg);
       parentPort.postMessage({ id: msg.id, ok: true, res });
     } catch (e) {
       parentPort.postMessage({ id: msg.id, ok: false, error: e.stack || String(e) });
@@ -1938,14 +2014,17 @@ class Helper {
   // 8칸 전체 리롤 시 강심장/승부사 기댓값 보정(해석적 근사).
   // 최초 숫자 I에서 달성한 업적 d를 다시 달성하면 강심장, 같은 성립 숫자열이면 승부사.
   // 같은 계열에 여러 개면 드문 것부터 "그것을 달성하고 더 드문 것은 못 한" 확률로 나눠 더한다.
-  heartBonus(I, ymd, prepared) {
+  // 8칸 전체 리롤 시 강심장/승부사를 다시 달성할 수 있는 업적들(최초 숫자 I 기준).
+  // 강심장: 같은 업적을 다른 성립 숫자로, 승부사: 같은 성립 숫자로 다시 달성.
+  heartItems(I, ymd, prepared) {
     const A = this.A, meta = this.meta, st = this.stats;
     const mk = this.evaluate(I, ymd, null);
     const bounds = this.dateBounds(ymd);
     const winSet = new Set(R.WINDOW_IDS);
-    const byFam = new Map();
+    const out = [];
     for (const id of meta.live) {
-      if (!mk[id] || meta.isHistory[id] || A.gang[id] !== A.gang[id]) continue;
+      const hasGang = A.gang[id] === A.gang[id], hasSeung = A.seung[id] === A.seung[id];
+      if (!mk[id] || meta.isHistory[id] || (!hasGang && !hasSeung)) continue;
       const count = meta.isDate[id] ? (bounds[id] ? bounds[id].count : 1) : st.count[id];
       if (!count) continue;
       const p = count / 1e8;
@@ -1955,31 +2034,46 @@ class Helper {
       let ps = 1e-8;
       if (winSet.has(id)) ps = st.keys[id] ? Math.max(1, st.keys[id][key] || 0) / 1e8 : p * 0.01;
       ps = Math.min(ps, p);
-      const seung = A.seung[id] === A.seung[id] ? A.seung[id] : A.gang[id];
-      const hbar = (ps * seung + (p - ps) * A.gang[id]) / p;
       const cbar = prepared && prepared.cntCtx[id] > 0 ? prepared.sumCtx[id] / prepared.cntCtx[id] : st.avgBase[id] || A.base[id];
-      const f = meta.famIndex[id];
-      if (!byFam.has(f)) byFam.set(f, []);
-      byFam.get(f).push({ id, p, gain: Math.max(0, hbar - cbar) });
+      out.push({ id, fam: meta.famIndex[id], p, ps, seung: hasSeung ? A.seung[id] : A.gang[id], gang: hasGang ? A.gang[id] : null, cbar });
+    }
+    return out;
+  }
+
+  // 기댓값 보정(해석적 근사). 같은 계열에 여러 개면 드문 것부터 "그것을 달성하고 더 드문 것은 못 한" 확률로 나눠 더한다.
+  heartBonus(items) {
+    const byFam = new Map();
+    for (const x of items) {
+      const hbar = (x.ps * x.seung + (x.p - x.ps) * (x.gang == null ? x.cbar : x.gang)) / x.p;
+      if (!byFam.has(x.fam)) byFam.set(x.fam, []);
+      byFam.get(x.fam).push({ p: x.p, gain: Math.max(0, hbar - x.cbar) });
     }
     let bonus = 0;
     for (const list of byFam.values()) {
       list.sort((a, b) => a.p - b.p);
       let covered = 0;
       for (const x of list) {
-        const q = Math.max(0, x.p - covered);
-        bonus += q * x.gain;
+        bonus += Math.max(0, x.p - covered) * x.gain;
         covered = Math.max(covered, x.p);
       }
     }
     return bonus;
   }
 
-  // 칸 수(1~7)마다 노릴 수 있는 최고 점수: 그 점수가 가장 높은 칸 조합, 확률, 실제로 그 점수가 나오는 숫자 하나와 주요 업적.
-  // 8칸 전체는 강심장/승부사가 붙어 최고 점수를 정확히 구하지 않으므로 뺀다.
+  // 강심장/승부사 점수만으로 target을 넘길 확률(합집합 근사)
+  heartTail(items, target) {
+    let p = 0;
+    for (const x of items) {
+      if (x.seung >= target) p += x.ps;
+      if (x.gang != null && x.gang >= target) p += x.p - x.ps;
+    }
+    return Math.min(1, p);
+  }
+
+  // 칸 수(1~4)마다 노릴 수 있는 최고 점수: 그 점수가 가장 높은 칸 조합, 확률, 실제로 그 점수가 나오는 숫자 하나와 주요 업적.
   jackpots(T, I, options, prepared) {
     const out = [];
-    for (let k = 1; k <= 7; k++) {
+    for (let k = 1; k <= 4; k++) {
       let pick = null;
       for (const o of options) {
         if (popcount(o.mask) !== k) continue;
@@ -1992,6 +2086,46 @@ class Helper {
     return out;
   }
 
+  // 목표 점수(예: 1억, 10억)를 넘길 확률. 1~4칸 중 가장 높은 조합, 칸 수별 최고, 8칸 전체(강심장/승부사 근사 포함).
+  // 1~4칸으로 0.01% 미만이거나 8칸 전체 리롤이 더 높으면 8칸 전체를 권한다(강심장/승부사로 넘기는 경우가 있어 전체가 더 높을 때가 있음).
+  goal(T, I, target, keepTotal, heart) {
+    const pge = subsetReduce(T, I, 'mean', x => (x >= target ? 1 : 0));
+    const full = Math.min(1, pge[255] + this.heartTail(heart, target));
+    const byK = [];
+    for (let m = 1; m < 255; m++) {
+      const k = popcount(m), p = pge[m];
+      if (!byK[k] || p > byK[k].p) byK[k] = { k, mask: m, p };
+    }
+    byK[8] = { k: 8, mask: 255, p: full };
+    let best = null;
+    for (let k = 1; k <= 4; k++) if (byK[k] && (!best || byK[k].p > best.p)) best = byK[k];
+    const minK = byK.findIndex(x => x && x.p > 0);
+    let rec;
+    if (keepTotal >= target) rec = { type: 'keep' };
+    else if (best && best.p >= 1e-4 && best.p >= full) rec = { type: 'reroll', ...best };
+    else rec = { type: 'full', ...byK[8], reason: best && best.p >= 1e-4 ? 'better' : 'low' };
+    return { target, rec, best, byK: byK.slice(1), minK: minK > 0 ? minK : null, full };
+  }
+
+  // 희귀 업적 찬스: 1~4칸 리롤로 딸 수 있는 등급 minTier 이상 (접두사, 업적)마다 가장 확률 높은 조합
+  async rare(I, prepared, minTier) {
+    const counts = await this.engine.rare({
+      I: Array.from(I), minTier, bounds: prepared.bounds,
+      dynamic: { date: prepared.ymd, history: prepared.hist },
+      ctx: { pk: Array.from(prepared.X.pk), pm: Array.from(prepared.X.pm) },
+    });
+    const best = new Map();
+    for (const [code, n] of counts) {
+      const mask = Math.floor(code / 8192), p = Math.floor(code / 512) % 16, id = code % 512, k = popcount(mask);
+      const prob = n / 10 ** k, key = p * 512 + id, cur = best.get(key);
+      if (!cur || prob > cur.prob || (prob === cur.prob && k < cur.k)) best.set(key, { prefix: PREFIXES[p], id, mask, k, prob });
+    }
+    const raw = this.meta.raw;
+    const list = [...best.values()].map(x => ({ ...x, tier: raw.rarityByPrefix[x.prefix][x.id], score: Number(raw.scores[x.prefix][x.id]) }));
+    list.sort((a, b) => b.tier - a.tier || b.prob - a.prob);
+    return list;
+  }
+
   async analyze(I, state) {
     const prepared = await this.prepare(state);
     const t0 = Date.now();
@@ -2001,15 +2135,17 @@ class Helper {
     const keep = this.breakdown(I, ymd, hist, keepCtx);
     const T = prepared.T;
     const ev = subsetReduce(T, I, 'mean');
-    const better = subsetReduce(T, I, 'mean', x => (x > keep.total ? 1 : 0));
     const { max: best, count: bestCount } = subsetMaxCount(T, I);
-    const heart = this.heartBonus(I, ymd, prepared);
+    const heartList = this.heartItems(I, ymd, prepared);
+    const heart = this.heartBonus(heartList);
     ev[255] += heart;
     const options = [];
-    for (let m = 1; m < 256; m++) options.push({ mask: m, ev: ev[m], pBetter: better[m], max: best[m], pMax: bestCount[m] / 10 ** popcount(m) });
+    for (let m = 1; m < 256; m++) options.push({ mask: m, ev: ev[m], max: best[m], pMax: bestCount[m] / 10 ** popcount(m) });
     const jackpots = this.jackpots(T, I, options, prepared);
+    const goals = (state.targets || [1e8, 1e9]).map(target => this.goal(T, I, target, keep.total, heartList));
+    const rare = await this.rare(I, prepared, state.rareTier == null ? 5 : state.rareTier);
     options.sort((a, b) => b.ev - a.ev);
-    return { I, keep, options, jackpots, heart, prepared, ms: Date.now() - t0 };
+    return { I, keep, options, jackpots, goals, rare, heart, prepared, ms: Date.now() - t0 };
   }
 }
 
@@ -2080,7 +2216,25 @@ function odds(p) {
   return p >= 0.01 ? pct(p) : '1/' + Math.round(1 / p).toLocaleString('ko-KR');
 }
 
-module.exports = { parseStreaks, fmt, pct, odds, tierName, shape, slots, recordFinal, statusText };
+// 큰 점수를 한국어 단위로: 1억, 10억, 2.5조
+function krAmount(x) {
+  const units = [[1e16, '경'], [1e12, '조'], [1e8, '억'], [1e4, '만']];
+  for (const [u, name] of units) if (x >= u) return +(x / u).toPrecision(3) + name;
+  return String(x);
+}
+// "1억, 10억", "5000만", "100000000" → 숫자 목록
+function parseAmounts(text) {
+  const mult = { 경: 1e16, 조: 1e12, 억: 1e8, 만: 1e4 };
+  const out = [];
+  for (const part of String(text).split(/[,\s]+/).filter(Boolean)) {
+    const m = part.match(/^([\d.]+)(경|조|억|만)?$/);
+    if (!m) throw new Error(`목표 점수 형식: 1억, 10억, 5000만 — "${part}"`);
+    out.push(Number(m[1]) * (m[2] ? mult[m[2]] : 1));
+  }
+  return out.sort((a, b) => a - b);
+}
+
+module.exports = { parseStreaks, fmt, pct, odds, krAmount, parseAmounts, tierName, shape, slots, recordFinal, statusText };
 
 };
   g.RandleCore = { require: req };

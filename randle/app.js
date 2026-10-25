@@ -11,7 +11,7 @@
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* 저장 불가(사생활 보호 모드 등) */ } };
   let state = load(STATE_KEY, { prev: null, asc: 1, desc: 1, streaks: null, history: [], date: null });
-  const settings = Object.assign({ top: 10, mijeong: 'separate' }, load(SET_KEY, {}));
+  const settings = Object.assign({ top: 10, mijeong: 'separate', targets: [1e8, 1e9], rareTier: 5 }, load(SET_KEY, {}));
   let engine = null, helper = null, raw = null;
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -56,6 +56,7 @@
         setupProgress(p);
       });
       helper = new Helper(engine, { meta: engine.meta, stats: engine.stats });
+      fillSettings();
       engine.onQueryProgress = (d, n) => { $('prep-bar').style.width = ((d / n) * 100).toFixed(1) + '%'; };
       $('setup').hidden = true;
       $('btn-roll').disabled = false;
@@ -112,6 +113,9 @@
     $('set-date').value = state.date || '';
     $('set-streaks').value = state.streaks ? state.streaks.map((s, d) => `${d}=${s}`).join(' ') : '';
     $('set-top').value = settings.top;
+    $('set-targets').value = settings.targets.map(F.krAmount).join(', ');
+    if (raw && !$('set-rare').options.length) raw.rarityTiers.forEach((t, i) => $('set-rare').add(new Option(t.name + ' 이상', i)));
+    $('set-rare').value = settings.rareTier;
     $('set-mijeong').value = settings.mijeong;
   }
 
@@ -134,43 +138,48 @@
   }
 
   function render(res) {
-    const I = res.I, keep = res.keep.total, best = res.options[0], top = Math.max(1, settings.top | 0);
+    const I = res.I, keep = res.keep.total, top = Math.max(1, settings.top | 0);
+    const name = id => esc(helper.meta.defs[id].name);
+    const estTag = id => (helper.meta.estimated.has(id) ? '<span class="est">추정</span>' : '');
     const parts = [];
-    if (best.ev > keep) {
-      const safe = res.options.filter(o => o.ev > keep).sort((a, b) => b.pBetter - a.pBetter)[0];
-      parts.push(`<div class="verdict">
-        <div>${digitsHtml(I, best.mask, true)}</div>
-        <div class="verdict-main">${esc(F.slots(best.mask))} 리롤 · 기댓값 <span class="num">${F.fmt(best.ev)}</span> RP
-          <span class="muted">(확정 ${F.fmt(keep)} RP 대비 +${F.fmt(best.ev - keep)})</span></div>
-        ${safe && safe.mask !== best.mask && safe.pBetter > best.pBetter + 0.05
-          ? `<div class="note">안정형: ${digitsHtml(I, safe.mask)} ${esc(F.slots(safe.mask))} 리롤 — 확정보다 높을 확률 ${F.pct(safe.pBetter)}, 기댓값 ${F.fmt(safe.ev)} RP</div>` : ''}
-      </div>`);
-    } else {
-      parts.push(`<div class="verdict"><div>${digitsHtml(I, 0, true)}</div>
-        <div class="verdict-main">리롤하지 말고 확정 · <span class="num">${F.fmt(keep)}</span> RP
-          <span class="muted">(가장 좋은 리롤의 기댓값 ${F.fmt(best.ev)} RP)</span></div></div>`);
+    // 목표 점수
+    for (const g of res.goals) {
+      const r = g.rec, label = `${F.krAmount(g.target)} 이상`;
+      let main;
+      if (r.type === 'keep') main = `<div>${digitsHtml(I, 0, true)}</div><div class="verdict-main">${label}: 지금 확정하면 이미 넘습니다 <span class="num">✓</span></div>`;
+      else if (r.type === 'reroll') main = `<div>${digitsHtml(I, r.mask, true)}</div><div class="verdict-main">${label}: ${esc(F.slots(r.mask))} 리롤 · 확률 <span class="num">${esc(F.odds(r.p))}</span>${g.minK && g.minK < r.k ? ` <span class="muted">(최소 ${g.minK}칸부터 가능)</span>` : ''}</div>`;
+      else main = `<div>${digitsHtml(I, 255, true)}</div><div class="verdict-main">${label}: 8칸 전체 리롤 · 확률 <span class="num">${esc(F.odds(r.p))}</span> <span class="muted">(1~4칸 최고 ${g.best && g.best.p > 0 ? esc(F.odds(g.best.p)) : '불가능'}${r.reason === 'low' ? ', 0.01% 미만' : '보다 높음'})</span></div>`;
+      const byK = g.byK.filter(x => x && (x.k <= 4 || x.k === 8)).map(x => `<span class="kchip${r.mask === x.mask && r.type !== 'keep' ? ' on' : ''}">${x.k}칸 <b>${esc(F.odds(x.p))}</b></span>`).join('');
+      parts.push(`<div class="verdict">${main}<div class="kchips">${byK}</div></div>`);
     }
-    const rows = res.options.slice(0, top).map((o, i) => `<tr${i === 0 ? ' class="best"' : ''}>
-      <td>${i + 1}</td><td>${digitsHtml(I, o.mask)}</td><td>${esc(F.slots(o.mask))}</td>
-      <td class="num">${F.fmt(o.ev)}</td><td class="num">${F.pct(o.pBetter)}</td><td class="num">${F.fmt(o.max)}</td></tr>`).join('');
-    parts.push(`<div class="table-wrap"><table>
-      <thead><tr><th>순위</th><th>결과 모양</th><th>리롤할 칸</th><th>기댓값 RP</th><th>확정보다 높을 확률</th><th>최대 RP</th></tr></thead>
-      <tbody>${rows}</tbody></table></div>`);
+    // 대박 노리기 (1~4칸)
     const jrows = res.jackpots.map(j => `<tr>
-      <td>${j.k}칸</td><td>${digitsHtml(I, j.mask)}</td><td class="num">${F.fmt(j.max)}</td><td class="num">${esc(F.odds(j.pMax))}</td>
+      <td>${j.k}칸</td><td>${digitsHtml(I, j.mask)}</td><td class="num">${esc(F.krAmount(j.max))}</td><td class="num">${esc(F.odds(j.pMax))}</td>
       <td>${j.example ? digitsHtml(j.example, 0) : '-'}</td>
-      <td class="jp-items">${j.items.slice(0, 3).map(it => `<span class="jp-item">${badge(it.prefix)} ${esc(helper.meta.defs[it.id].name)}</span>`).join('')}</td></tr>`).join('');
-    parts.push(`<div class="jackpot"><h3>칸 수별 대박</h3><p class="note">그 칸 수만큼 리롤할 때 노릴 수 있는 최고 점수와 그 확률, 그 점수가 나오는 숫자</p>
+      <td class="jp-items">${j.items.slice(0, 3).map(it => `<span class="jp-item">${badge(it.prefix)} ${name(it.id)}</span>`).join('')}</td></tr>`).join('');
+    parts.push(`<div class="jackpot"><h3>대박 노리기</h3><p class="note">그 칸 수만큼 리롤할 때 노릴 수 있는 최고 점수와 확률, 그 점수가 나오는 숫자</p>
       <div class="table-wrap"><table class="jp">
       <thead><tr><th>칸 수</th><th>리롤할 칸</th><th>최고 RP</th><th>확률</th><th>나오면 대박인 숫자</th><th>주요 업적</th></tr></thead>
       <tbody>${jrows}</tbody></table></div></div>`);
+    // 희귀 업적 찬스
+    const tierName = raw.rarityTiers[settings.rareTier].name;
+    const rrows = res.rare.slice(0, top).map(x => `<tr>
+      <td class="jp-items"><span class="jp-item">${badge(x.prefix)} ${name(x.id)}</span>${tier(x.prefix, x.id)}${estTag(x.id)}</td>
+      <td>${digitsHtml(I, x.mask)}</td><td class="num">${esc(F.odds(x.prob))}</td><td class="num">${esc(F.krAmount(x.score))}</td></tr>`).join('');
+    parts.push(`<div class="jackpot"><h3>희귀 업적 찬스</h3><p class="note">1~4칸 리롤로 딸 수 있는 ${esc(tierName)} 이상 업적 (등급 높은 순)</p>
+      ${res.rare.length ? `<div class="table-wrap"><table class="rare"><thead><tr><th>업적</th><th>리롤할 칸</th><th>확률</th><th>RP</th></tr></thead><tbody>${rrows}</tbody></table></div>` : '<p class="muted">없음</p>'}</div>`);
+    // 그대로 확정
     const items = res.keep.items.map(it => `<li${it.counted ? '' : ' class="excluded"'}>${badge(it.prefix)}
-      <span>${esc(helper.meta.defs[it.id].name)}</span>${tier(it.prefix, it.id)}${helper.meta.estimated.has(it.id) ? '<span class="est">추정</span>' : ''}
+      <span>${name(it.id)}</span>${tier(it.prefix, it.id)}${estTag(it.id)}
       <span class="score">${F.fmt(it.score)} RP${it.counted ? '' : ' · 합산 제외'}</span></li>`).join('');
-    parts.push(`<details class="keep" open><summary>그대로 확정하면 <b>${F.fmt(keep)}</b> RP</summary><ul class="ach">${items}</ul></details>`);
+    parts.push(`<details class="keep"><summary>그대로 확정하면 <b>${F.fmt(keep)}</b> RP (${esc(F.krAmount(keep))})</summary><ul class="ach">${items}</ul></details>`);
+    // 기댓값 참고
+    const rows = res.options.slice(0, 10).map((o, i) => `<tr><td>${i + 1}</td><td>${digitsHtml(I, o.mask)}</td><td>${esc(F.slots(o.mask))}</td><td class="num">${F.fmt(o.ev)}</td></tr>`).join('');
+    parts.push(`<details class="keep"><summary>기댓값 순 (참고)</summary><div class="table-wrap"><table>
+      <thead><tr><th>순위</th><th>결과 모양</th><th>리롤할 칸</th><th>기댓값 RP</th></tr></thead><tbody>${rows}</tbody></table></div></details>`);
     const notes = [];
-    if (helper.meta.estimated.size) notes.push(`'추정' 표시 업적 ${helper.meta.estimated.size}종은 게임이 점수를 공개하지 않아 공식으로 추정한 점수입니다.`);
-    if (res.heart > 0) notes.push(`8칸 전체 리롤 기댓값에는 강심장/승부사 보정 +${F.fmt(res.heart)} RP(근사)가 포함되어 있습니다.`);
+    if (helper.meta.estimated.size) notes.push(`'추정' 표시 업적은 게임이 점수를 공개하지 않아 공식으로 추정한 점수입니다.`);
+    notes.push('8칸 전체 리롤 확률에는 강심장/승부사로 넘기는 경우가 근사로 포함됩니다.');
     notes.push(`점수표 준비 ${(res.prepared.ms / 1000).toFixed(1)}초 · 분석 ${(res.ms / 1000).toFixed(1)}초`);
     parts.push(`<p class="note">${notes.map(esc).join('<br>')}</p>`);
     $('result').innerHTML = parts.join('');
@@ -185,7 +194,7 @@
     $('result').innerHTML = `<p class="muted">${helper.prepared ? '분석 중…' : '직전 판 기준 점수표를 기다리는 중…'}</p>`;
     await nextFrame();
     try {
-      const res = await helper.analyze(I, state);
+      const res = await helper.analyze(I, { ...state, targets: settings.targets, rareTier: settings.rareTier });
       $('prep').hidden = true;
       render(res);
       $('final').value = '';
@@ -222,6 +231,8 @@
       state.date = date || null;
       state.streaks = F.parseStreaks($('set-streaks').value.trim());
       settings.top = Math.max(1, Math.min(50, +$('set-top').value || 10));
+      settings.targets = F.parseAmounts($('set-targets').value || '1억, 10억');
+      if ($('set-rare').value !== '') settings.rareTier = +$('set-rare').value;
       const mij = $('set-mijeong').value;
       if (mij !== settings.mijeong) {
         if (!confirm("'미정' 계열 설정을 바꾸면 기본 점수표를 다시 계산합니다(1~3분). 계속할까요?")) { fillSettings(); return; }

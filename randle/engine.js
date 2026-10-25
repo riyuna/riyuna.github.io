@@ -3,7 +3,7 @@
 // Node의 lib/engine.js와 같은 일을 한다. 처음 한 번 조회 테이블과 기본 점수표(1억 개)를 만들어 브라우저에 저장해 두고,
 // 판마다 직전 판 문맥 점수표를 워커들이 나눠 계산한다.
 (function (g) {
-  const { chunks, mergeBuild, mergeQuery, statsFromBuild } = RandleCore.require('sweepplan');
+  const { chunks, mergeBuild, mergeQuery, statsFromBuild, rareTasks, mergeCounts } = RandleCore.require('sweepplan');
   const { buildMeta } = RandleCore.require('meta');
   const N = 1e8;
   const F0_PIECE = 25e6; // IndexedDB에 나눠 저장할 바이트 단위
@@ -171,6 +171,11 @@
       const results = await Promise.all(parts.map(([lo, hi]) =>
         this.pool.run({ task: 'query', lo, hi, F0: this.F0, T: this.T, ...q }).then(r => { done++; report(); return r; })));
       return { T: new Float32Array(this.T), ...mergeQuery(results) };
+    }
+
+    async rare(q) {
+      const results = await Promise.all(rareTasks().map(masks => this.pool.run({ task: 'rare', masks, ...q })));
+      return mergeCounts(results);
     }
 
     static async clearCache() {

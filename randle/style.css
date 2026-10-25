@@ -109,3 +109,9 @@ table.jp th:nth-child(5), table.jp td:nth-child(5), table.jp th:nth-child(6), ta
 .badge { white-space: nowrap; }
 .jp-item { display: inline-block; white-space: nowrap; margin-right: 10px; }
 .est { font-size: 0.7rem; color: var(--reroll); border: 1px solid var(--reroll); border-radius: 4px; padding: 0 4px; }
+.kchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.kchip { font-size: 0.8rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; }
+.kchip b { color: var(--text); font-weight: 600; }
+.kchip.on { border-color: var(--reroll); color: var(--reroll); }
+table.rare th, table.rare td { text-align: right; }
+table.rare th:nth-child(1), table.rare td:nth-child(1), table.rare th:nth-child(2), table.rare td:nth-child(2) { text-align: left; }
