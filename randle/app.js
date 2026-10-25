@@ -50,11 +50,12 @@
     try {
       raw = await (await fetch('randle_data.json?v=' + RANDLE.version)).json();
       engine = new WebEngine({ version: RANDLE.version, cacheKey: RANDLE.core });
-      await engine.init(raw, { mijeong: settings.mijeong }, p => {
+      const info = await engine.init(raw, { mijeong: settings.mijeong }, p => {
         $('setup').hidden = false;
         $('setup-note').hidden = p.stage === 'load';
         setupProgress(p);
       });
+      if (info.saveError) showError(`계산 결과를 브라우저에 저장하지 못했습니다(${info.saveError}). 저장 공간을 확인해 주세요. 다음에 열 때 다시 계산합니다.`);
       helper = new Helper(engine, { meta: engine.meta, stats: engine.stats });
       fillSettings();
       engine.onQueryProgress = (d, n) => { $('prep-bar').style.width = ((d / n) * 100).toFixed(1) + '%'; };
@@ -76,19 +77,28 @@
     const pct = p.total ? (p.done / p.total) * 100 : 0;
     $('setup-bar').style.width = pct.toFixed(1) + '%';
     const label = {
-      load: '저장된 계산 불러오는 중',
+      load: '이 브라우저에 저장된 계산 불러오는 중 (다운로드 아님)',
       tables: '조회 테이블 만드는 중 (소수·소인수 등)',
       build: `기본 점수표 계산 중 (1억 개) ${pct.toFixed(0)}%`,
-      save: '브라우저에 저장하는 중',
+      save: '다음에 바로 열 수 있게 브라우저에 저장하는 중',
     }[p.stage];
     $('setup-text').textContent = label + (p.stage === 'tables' && p.text ? ` · ${p.text.trim()}` : '');
+    const why = {
+      first: '처음 방문이라 한 번 계산합니다. 결과(약 530MB)는 이 브라우저에 저장되어 다음부터는 몇 초 안에 열립니다.',
+      update: '계산 방식이 업데이트되어 한 번 다시 계산합니다. 결과는 다시 저장되어 다음부터는 몇 초 안에 열립니다.',
+      evicted: '저장해 둔 계산이 브라우저에서 지워져(저장 공간 정리 등) 다시 계산합니다.',
+      nodb: '이 브라우저 창은 저장소를 쓸 수 없어(시크릿 창 등) 열 때마다 계산합니다.',
+    }[p.reason];
+    if (why) $('setup-note').textContent = why;
   }
 
   // 직전 판 기준 점수표를 미리 만든다(10~20초)
   function warm() {
     if (!helper) return Promise.resolve();
     $('prep').hidden = false;
-    $('prep-text').textContent = '직전 판 기준 점수표 준비 중…';
+    $('prep-text').textContent = state.prev
+      ? `직전 판(${state.prev}) 기준 점수표 계산 중… 직전 판에 따라 달라서 열 때마다·기록할 때마다 계산합니다(10~20초).`
+      : '점수표 준비 중…';
     const p = helper.prepare(state);
     p.then(() => { if (helper.prepared) $('prep').hidden = true; }).catch(err => showError('점수표 준비 오류: ' + err.message));
     return p;
@@ -131,6 +141,25 @@
     const [bg, fg] = BADGE[prefix] || ['#2a3044', '#e6e9f2'];
     return `<span class="badge" style="background:${bg};color:${fg}">${esc(displayPrefix(prefix))}</span>`;
   }
+  // 접두사 배지 + 업적 이름. 마우스를 올리면(또는 탭하면) 업적 설명 툴팁.
+  function achLabel(prefix, id) {
+    return `<span class="ach-name" tabindex="0" data-tip="${esc(prefix)}:${id}">${badge(prefix)} ${esc(helper.meta.defs[id].name)}</span>`;
+  }
+  function tipHtml(prefix, id) {
+    const d = helper.meta.defs[id];
+    const idx = raw.rarityByPrefix[prefix] && raw.rarityByPrefix[prefix][id], t = idx == null ? null : raw.rarityTiers[idx];
+    const sc = raw.scores[prefix] && raw.scores[prefix][id];
+    const q = d.count ? d.count / 1e8 : d.initial;
+    const lines = [`<div class="tip-head">${badge(prefix)} <b>${esc(d.name)}</b>${d.emoji ? ' ' + esc(d.emoji) : ''}</div>`];
+    lines.push(`<div class="tip-meta">${t ? `<span style="color:${t.color}">${esc(t.name)}</span> · ` : ''}${sc != null ? F.fmt(Number(sc)) + ' RP' : ''}${helper.meta.estimated.has(id) ? ' (추정)' : ''} · ${d.history ? '설계 확률' : '뽑을 확률'} ${esc(F.odds(q))}</div>`);
+    lines.push(`<div>${esc(d.condition)}</div>`);
+    if (d.description && d.description !== d.condition) lines.push(`<div class="tip-sub">${esc(d.description)}</div>`);
+    if (d.example) lines.push(`<div class="tip-sub">예: ${esc(d.example)}</div>`);
+    const help = raw.prefixDescriptions && raw.prefixDescriptions[prefix];
+    if (help && prefix !== '기본') lines.push(`<div class="tip-sub">[${esc(displayPrefix(prefix))}] ${esc(help)}</div>`);
+    return lines.join('');
+  }
+
   function tier(prefix, id) {
     const idx = raw.rarityByPrefix[prefix] && raw.rarityByPrefix[prefix][id];
     const t = idx == null ? null : raw.rarityTiers[idx];
@@ -156,7 +185,7 @@
     const jrows = res.jackpots.map(j => `<tr>
       <td>${j.k}칸</td><td>${digitsHtml(I, j.mask)}</td><td class="num">${esc(F.krAmount(j.max))}</td><td class="num">${esc(F.odds(j.pMax))}</td>
       <td>${j.example ? digitsHtml(j.example, 0) : '-'}</td>
-      <td class="jp-items">${j.items.slice(0, 3).map(it => `<span class="jp-item">${badge(it.prefix)} ${name(it.id)}</span>`).join('')}</td></tr>`).join('');
+      <td class="jp-items">${j.items.slice(0, 3).map(it => `<span class="jp-item">${achLabel(it.prefix, it.id)}</span>`).join('')}</td></tr>`).join('');
     parts.push(`<div class="jackpot"><h3>대박 노리기</h3><p class="note">그 칸 수만큼 리롤할 때 노릴 수 있는 최고 점수와 확률, 그 점수가 나오는 숫자</p>
       <div class="table-wrap"><table class="jp">
       <thead><tr><th>칸 수</th><th>리롤할 칸</th><th>최고 RP</th><th>확률</th><th>나오면 대박인 숫자</th><th>주요 업적</th></tr></thead>
@@ -164,13 +193,12 @@
     // 희귀 업적 찬스
     const tierName = raw.rarityTiers[settings.rareTier].name;
     const rrows = res.rare.slice(0, top).map(x => `<tr>
-      <td class="jp-items"><span class="jp-item">${badge(x.prefix)} ${name(x.id)}</span>${tier(x.prefix, x.id)}${estTag(x.id)}</td>
+      <td class="jp-items"><span class="jp-item">${achLabel(x.prefix, x.id)}</span>${tier(x.prefix, x.id)}${estTag(x.id)}</td>
       <td>${digitsHtml(I, x.mask)}</td><td class="num">${esc(F.odds(x.prob))}</td><td class="num">${esc(F.krAmount(x.score))}</td></tr>`).join('');
     parts.push(`<div class="jackpot"><h3>희귀 업적 찬스</h3><p class="note">1~4칸 리롤로 딸 수 있는 ${esc(tierName)} 이상 업적 (등급 높은 순)</p>
       ${res.rare.length ? `<div class="table-wrap"><table class="rare"><thead><tr><th>업적</th><th>리롤할 칸</th><th>확률</th><th>RP</th></tr></thead><tbody>${rrows}</tbody></table></div>` : '<p class="muted">없음</p>'}</div>`);
     // 그대로 확정
-    const items = res.keep.items.map(it => `<li${it.counted ? '' : ' class="excluded"'}>${badge(it.prefix)}
-      <span>${name(it.id)}</span>${tier(it.prefix, it.id)}${estTag(it.id)}
+    const items = res.keep.items.map(it => `<li${it.counted ? '' : ' class="excluded"'}>${achLabel(it.prefix, it.id)}${tier(it.prefix, it.id)}${estTag(it.id)}
       <span class="score">${F.fmt(it.score)} RP${it.counted ? '' : ' · 합산 제외'}</span></li>`).join('');
     parts.push(`<details class="keep"><summary>그대로 확정하면 <b>${F.fmt(keep)}</b> RP (${esc(F.krAmount(keep))})</summary><ul class="ach">${items}</ul></details>`);
     // 기댓값 참고
@@ -258,6 +286,27 @@
     await WebEngine.clearCache();
     location.reload();
   });
+
+  // ---------- 툴팁 ----------
+  const tip = $('tip');
+  let tipFor = null;
+  function showTip(el) {
+    const [prefix, id] = el.dataset.tip.split(':');
+    tip.innerHTML = tipHtml(prefix, +id);
+    tip.hidden = false;
+    tipFor = el;
+    const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+    const top = r.bottom + 8 + h <= window.innerHeight ? r.bottom + 6 : Math.max(8, r.top - h - 6);
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+  function hideTip() { tip.hidden = true; tipFor = null; }
+  document.addEventListener('mouseover', e => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el && el !== tipFor) showTip(el); else if (!el && tipFor) hideTip(); });
+  document.addEventListener('focusin', e => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) showTip(el); });
+  document.addEventListener('focusout', hideTip);
+  document.addEventListener('click', e => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) showTip(el); else hideTip(); });
+  window.addEventListener('scroll', hideTip, true);
 
   // ---------- 시작 ----------
   if (load(UNLOCK_KEY, null) === RANDLE.pw) openApp();

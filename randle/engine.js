@@ -7,6 +7,7 @@
   const { buildMeta } = RandleCore.require('meta');
   const N = 1e8;
   const F0_PIECE = 25e6; // IndexedDB에 나눠 저장할 바이트 단위
+  const SAVED_KEY = 'randle-cache-saved'; // 마지막으로 저장에 성공한 캐시 키(지워졌는지 구분용)
 
   class Pool {
     constructor(n, url) {
@@ -134,14 +135,22 @@
       let db = null;
       try { db = await openDB(); } catch (e) { console.warn('IndexedDB를 쓸 수 없어 캐시 없이 계산합니다', e); }
       const cached = db ? await loadCache(db, key, onProgress).catch(e => { console.warn(e); return null; }) : null;
+      // 처음 계산하는 이유: 첫 방문 / 계산 방식 업데이트 / 브라우저가 저장소를 비움 / 저장소 사용 불가
+      let reason = null;
+      if (!cached) {
+        const head = db ? await get(db, 'head').catch(() => null) : null;
+        let saved = null;
+        try { saved = localStorage.getItem(SAVED_KEY); } catch { /* 무시 */ }
+        reason = !db ? 'nodb' : head && head.key !== key ? 'update' : saved ? 'evicted' : 'first';
+      }
       if (cached) {
         this.tables = cached.tables;
         this.stats = cached.stats;
         this.F0 = cached.F0;
       } else {
-        onProgress({ stage: 'tables', text: '' });
+        onProgress({ stage: 'tables', text: '', reason });
         const tp = new Pool(1, this.workerUrl);
-        tp.onLog = text => onProgress({ stage: 'tables', text });
+        tp.onLog = text => onProgress({ stage: 'tables', text, reason });
         this.tables = await tp.run({ task: 'tables', raw });
         tp.close();
       }
@@ -151,16 +160,25 @@
         this.F0 = new SharedArrayBuffer(N * 4);
         const parts = chunks();
         let done = 0;
-        onProgress({ stage: 'build', done, total: parts.length });
+        onProgress({ stage: 'build', done, total: parts.length, reason });
         const results = await Promise.all(parts.map(([lo, hi]) =>
           this.pool.run({ task: 'build', lo, hi, F0: this.F0, validateDate: String(this.meta.date) })
-            .then(r => { onProgress({ stage: 'build', done: ++done, total: parts.length }); return r; })));
+            .then(r => { onProgress({ stage: 'build', done: ++done, total: parts.length, reason }); return r; })));
         this.stats = statsFromBuild(this.meta, mergeBuild(results));
-        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-        if (db) await saveCache(db, key, this.tables, this.F0, this.stats, onProgress).catch(e => console.warn('캐시 저장 실패', e));
+        // 저장소 사용량이 많아도 브라우저가 지우지 않도록 요청(허용 여부는 브라우저가 정함)
+        if (navigator.storage && navigator.storage.persist) this.persisted = await navigator.storage.persist().catch(() => false);
+        if (db) {
+          try {
+            await saveCache(db, key, this.tables, this.F0, this.stats, onProgress);
+            try { localStorage.setItem(SAVED_KEY, key); } catch { /* 무시 */ }
+          } catch (e) {
+            console.warn('캐시 저장 실패', e);
+            this.saveError = e.message || String(e);
+          }
+        }
       }
       this.T = new SharedArrayBuffer(N * 4);
-      return { cached: !!cached };
+      return { cached: !!cached, reason, saveError: this.saveError || null };
     }
 
     async query(q) {

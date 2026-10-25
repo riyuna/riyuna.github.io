@@ -115,3 +115,10 @@ table.jp th:nth-child(5), table.jp td:nth-child(5), table.jp th:nth-child(6), ta
 .kchip.on { border-color: var(--reroll); color: var(--reroll); }
 table.rare th, table.rare td { text-align: right; }
 table.rare th:nth-child(1), table.rare td:nth-child(1), table.rare th:nth-child(2), table.rare td:nth-child(2) { text-align: left; }
+.ach-name { cursor: help; border-bottom: 1px dotted var(--muted); }
+.ach-name:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tip { position: fixed; z-index: 10; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; font-size: 0.85rem; line-height: 1.5; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); display: grid; gap: 4px; pointer-events: none; }
+.tip-head { display: flex; gap: 6px; align-items: baseline; }
+.tip-meta { font-size: 0.8rem; color: var(--muted); }
+.tip-sub { font-size: 0.8rem; color: var(--muted); }
