@@ -11,7 +11,9 @@
   const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* 저장 불가(사생활 보호 모드 등) */ } };
   let state = load(STATE_KEY, { prev: null, asc: 1, desc: 1, streaks: null, history: [], date: null });
-  const settings = Object.assign({ top: 10, mijeong: 'separate', targets: [1e8, 1e9], rareTier: 5 }, load(SET_KEY, {}));
+  const DEFAULT_TARGETS = [1e8, 1e9, 1e10, 1e11];
+  const settings = Object.assign({ top: 10, mijeong: 'separate', targets: DEFAULT_TARGETS, rareTier: 5 }, load(SET_KEY, {}));
+  if (String(settings.targets) === String([1e8, 1e9])) settings.targets = DEFAULT_TARGETS; // 예전 기본값은 새 기본값으로
   let engine = null, helper = null, raw = null;
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -177,9 +179,10 @@
       let main;
       if (r.type === 'keep') main = `<div>${digitsHtml(I, 0, true)}</div><div class="verdict-main">${label}: 지금 확정하면 이미 넘습니다 <span class="num">✓</span></div>`;
       else if (r.type === 'reroll') main = `<div>${digitsHtml(I, r.mask, true)}</div><div class="verdict-main">${label}: ${esc(F.slots(r.mask))} 리롤 · 확률 <span class="num">${esc(F.odds(r.p))}</span>${g.minK && g.minK < r.k ? ` <span class="muted">(최소 ${g.minK}칸부터 가능)</span>` : ''}</div>`;
-      else main = `<div>${digitsHtml(I, 255, true)}</div><div class="verdict-main">${label}: 8칸 전체 리롤 · 확률 <span class="num">${esc(F.odds(r.p))}</span> <span class="muted">(1~4칸 최고 ${g.best && g.best.p > 0 ? esc(F.odds(g.best.p)) : '불가능'}${r.reason === 'low' ? ', 0.01% 미만' : '보다 높음'})</span></div>`;
-      const byK = g.byK.filter(x => x && (x.k <= 4 || x.k === 8)).map(x => `<span class="kchip${r.mask === x.mask && r.type !== 'keep' ? ' on' : ''}">${x.k}칸 <b>${esc(F.odds(x.p))}</b></span>`).join('');
-      parts.push(`<div class="verdict">${main}<div class="kchips">${byK}</div></div>`);
+      else main = `<div class="verdict-main">${label}: <span class="muted">어떻게 리롤해도 불가능</span></div>`;
+      // 칸 수별 최고 조합: 마우스를 올리면 리롤할 칸 모양(*)을 보여준다
+      const byK = r.type === 'none' ? '' : g.byK.map(x => `<span class="kchip${r.type === 'reroll' && r.mask === x.mask ? ' on' : ''}"${x.p > 0 ? ` title="${esc(F.shape(I, x.mask))}"` : ''}>${x.k}칸 <b>${x.p > 0 ? esc(F.odds(x.p)) : '불가'}</b></span>`).join('');
+      parts.push(`<div class="verdict">${main}${byK ? `<div class="kchips">${byK}</div>` : ''}</div>`);
     }
     // 대박 노리기 (1~4칸)
     const jrows = res.jackpots.map(j => `<tr>
@@ -259,7 +262,7 @@
       state.date = date || null;
       state.streaks = F.parseStreaks($('set-streaks').value.trim());
       settings.top = Math.max(1, Math.min(50, +$('set-top').value || 10));
-      settings.targets = F.parseAmounts($('set-targets').value || '1억, 10억');
+      settings.targets = $('set-targets').value.trim() ? F.parseAmounts($('set-targets').value) : DEFAULT_TARGETS;
       if ($('set-rare').value !== '') settings.rareTier = +$('set-rare').value;
       const mij = $('set-mijeong').value;
       if (mij !== settings.mijeong) {

@@ -1379,7 +1379,36 @@ function subsetMaxCount(T, I) {
   return { max, count };
 }
 
-module.exports = { subsetReduce, subsetMaxCount };
+// 목표 점수 여러 개(오름차순 th)를 한 번에: 리롤 칸 집합마다 점수 ≥ th[i] 일 확률. 결과는 out[mask * L + i].
+// 결과값마다 "넘긴 목표 개수"를 세어 칸별로 누적한다. 평균 대신 정수 개수를 세므로 확률이 같은지 정확히 비교할 수 있다.
+function subsetLevels(T, I, th) {
+  const L = th.length, out = new Float64Array(256 * L);
+  const level = x => { let k = 0; while (k < L && x >= th[k]) k++; return k; };
+  function rec(arr, off, j, mask, free) {
+    if (j === 8) {
+      const div = 10 ** free;
+      if (arr === T) { const k = level(arr[off]); for (let i = 0; i < L; i++) out[mask * L + i] = i < k ? 1 : 0; }
+      else for (let i = 0; i < L; i++) out[mask * L + i] = arr[off * L + i] / div;
+      return;
+    }
+    const size = BLOCK[j];
+    rec(arr, off + I[j] * size, j + 1, mask, free);
+    const buf = new Uint32Array(size * L);
+    for (let b = 0; b < 10; b++) {
+      const base = off + b * size;
+      if (arr === T) {
+        for (let k = 0; k < size; k++) { const lv = level(arr[base + k]); for (let i = 0; i < lv; i++) buf[k * L + i]++; }
+      } else {
+        for (let k = 0, n = size * L, s = base * L; k < n; k++) buf[k] += arr[s + k];
+      }
+    }
+    rec(buf, 0, j + 1, mask | (1 << j), free + 1);
+  }
+  rec(T, 0, 0, 0, 0);
+  return out;
+}
+
+module.exports = { subsetReduce, subsetMaxCount, subsetLevels };
 
 };
 defs["digitdp"] = function (module, exports, require, __dirname, __filename) {
@@ -1818,7 +1847,9 @@ const { tablesFromShared } = require('./tables');
 const R = require('./rules');
 const S = require('./score');
 const { containsBounds } = require('./digitdp');
-const { subsetReduce, subsetMaxCount } = require('./transform');
+const { subsetReduce, subsetMaxCount, subsetLevels } = require('./transform');
+
+const DEFAULT_TARGETS = [1e8, 1e9, 1e10, 1e11]; // 1억·10억·100억·1000억
 
 function kstToday() {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -2086,25 +2117,34 @@ class Helper {
     return out;
   }
 
-  // 목표 점수(예: 1억, 10억)를 넘길 확률. 1~4칸 중 가장 높은 조합, 칸 수별 최고, 8칸 전체(강심장/승부사 근사 포함).
-  // 1~4칸으로 0.01% 미만이거나 8칸 전체 리롤이 더 높으면 8칸 전체를 권한다(강심장/승부사로 넘기는 경우가 있어 전체가 더 높을 때가 있음).
-  goal(T, I, target, keepTotal, heart) {
-    const pge = subsetReduce(T, I, 'mean', x => (x >= target ? 1 : 0));
-    const full = Math.min(1, pge[255] + this.heartTail(heart, target));
-    const byK = [];
-    for (let m = 1; m < 255; m++) {
-      const k = popcount(m), p = pge[m];
-      if (!byK[k] || p > byK[k].p) byK[k] = { k, mask: m, p };
-    }
-    byK[8] = { k: 8, mask: 255, p: full };
-    let best = null;
-    for (let k = 1; k <= 4; k++) if (byK[k] && (!best || byK[k].p > best.p)) best = byK[k];
-    const minK = byK.findIndex(x => x && x.p > 0);
-    let rec;
-    if (keepTotal >= target) rec = { type: 'keep' };
-    else if (best && best.p >= 1e-4 && best.p >= full) rec = { type: 'reroll', ...best };
-    else rec = { type: 'full', ...byK[8], reason: best && best.p >= 1e-4 ? 'better' : 'low' };
-    return { target, rec, best, byK: byK.slice(1), minK: minK > 0 ? minK : null, full };
+  // 목표 점수들을 넘길 확률. 목표마다 1~8칸 리롤 255가지 전체에서 가장 높은 조합을 고르고,
+  // 확률이 같으면 더 높은 목표를 넘길 확률이 큰 조합, 그다음 적은 칸 수를 고른다.
+  // 8칸 전체 리롤은 강심장/승부사 점수만으로 넘기는 경우(근사)를 더한다.
+  goals(T, I, targets, keepTotal, heart) {
+    const th = targets.slice().sort((a, b) => a - b), L = th.length;
+    const lv = subsetLevels(T, I, th);
+    const full = th.map((t, i) => Math.min(1, lv[255 * L + i] + this.heartTail(heart, t)));
+    const P = (m, i) => (m === 255 ? full[i] : lv[m * L + i]);
+    const better = (a, b, i) => {
+      for (let t = i; t < L; t++) { const x = P(a, t), y = P(b, t); if (x !== y) return x > y; }
+      return popcount(a) < popcount(b);
+    };
+    return th.map((target, i) => {
+      let best = 1;
+      const byK = [];
+      for (let m = 1; m < 256; m++) {
+        if (better(m, best, i)) best = m;
+        const k = popcount(m);
+        if (!byK[k] || better(m, byK[k], i)) byK[k] = m;
+      }
+      const rows = byK.slice(1).map(m => ({ k: popcount(m), mask: m, p: P(m, i) }));
+      const first = rows.find(r => r.p > 0);
+      let rec;
+      if (keepTotal >= target) rec = { type: 'keep' };
+      else if (P(best, i) > 0) rec = { type: 'reroll', k: popcount(best), mask: best, p: P(best, i) };
+      else rec = { type: 'none' };
+      return { target, rec, byK: rows, minK: first ? first.k : null };
+    });
   }
 
   // 희귀 업적 찬스: 1~4칸 리롤로 딸 수 있는 등급 minTier 이상 (접두사, 업적)마다 가장 확률 높은 조합
@@ -2142,14 +2182,14 @@ class Helper {
     const options = [];
     for (let m = 1; m < 256; m++) options.push({ mask: m, ev: ev[m], max: best[m], pMax: bestCount[m] / 10 ** popcount(m) });
     const jackpots = this.jackpots(T, I, options, prepared);
-    const goals = (state.targets || [1e8, 1e9]).map(target => this.goal(T, I, target, keep.total, heartList));
+    const goals = this.goals(T, I, state.targets || DEFAULT_TARGETS, keep.total, heartList);
     const rare = await this.rare(I, prepared, state.rareTier == null ? 5 : state.rareTier);
     options.sort((a, b) => b.ev - a.ev);
     return { I, keep, options, jackpots, goals, rare, heart, prepared, ms: Date.now() - t0 };
   }
 }
 
-module.exports = { Helper, kstToday, parseRoll, rollStr, rollValue, PREFIXES };
+module.exports = { Helper, kstToday, parseRoll, rollStr, rollValue, PREFIXES, DEFAULT_TARGETS };
 
 };
 defs["format"] = function (module, exports, require, __dirname, __filename) {
