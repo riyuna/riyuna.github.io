@@ -94,14 +94,14 @@
     if (why) $('setup-note').textContent = why;
   }
 
-  // 직전 판 기준 점수표를 미리 만든다(10~20초)
+  // 직전 판 기준 점수표를 미리 만든다(보통 1~2초, 직전 판에 드문 업적이 많으면 더 걸림)
   function warm() {
     if (!helper) return Promise.resolve();
     $('prep').hidden = false;
     $('prep-text').textContent = state.prev
-      ? `직전 판(${state.prev}) 기준 점수표 계산 중… 직전 판에 따라 달라서 열 때마다·기록할 때마다 계산합니다(10~20초).`
+      ? `직전 판(${state.prev}) 기준 점수표 계산 중… 직전 판에 따라 달라서 열 때마다·기록할 때마다 계산합니다(보통 1~2초).`
       : '점수표 준비 중…';
-    const p = helper.prepare(state);
+    const p = helper.prepare({ ...state, targets: settings.targets });
     p.then(() => { if (helper.prepared) $('prep').hidden = true; }).catch(err => showError('점수표 준비 오류: ' + err.message));
     return p;
   }
@@ -211,6 +211,7 @@
     const notes = [];
     if (helper.meta.estimated.size) notes.push(`'추정' 표시 업적은 게임이 점수를 공개하지 않아 공식으로 추정한 점수입니다.`);
     notes.push('8칸 전체 리롤 확률에는 강심장/승부사로 넘기는 경우가 근사로 포함됩니다.');
+    if (res.prepared.fast) notes.push('직전 판 점수표는 빠른 계산이라 5칸 이상 리롤의 기댓값(참고)만 근사입니다. 목표 확률·대박 노리기는 정확합니다.');
     notes.push(`점수표 준비 ${(res.prepared.ms / 1000).toFixed(1)}초 · 분석 ${(res.ms / 1000).toFixed(1)}초`);
     parts.push(`<p class="note">${notes.map(esc).join('<br>')}</p>`);
     $('result').innerHTML = parts.join('');

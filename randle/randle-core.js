@@ -1558,6 +1558,127 @@ function mergeCounts(results) {
 module.exports = { N, CHUNKS, chunks, mergeBuild, mergeQuery, statsFromBuild, rareTasks, mergeCounts };
 
 };
+defs["patchplan"] = function (module, exports, require, __dirname, __filename) {
+'use strict';
+// 직전 판 점수표를 빠르게 만들기 위한 보조 함수들.
+// 점수 차이가 작은 계열은 1억 개를 다시 훑지 않고, 정확히 다시 계산해야 하는 숫자 목록만 만들어 워커에 나눠 준다.
+// (Node 엔진과 브라우저 엔진이 함께 쓴다)
+
+const W = [1e7, 1e6, 1e5, 1e4, 1e3, 100, 10, 1];
+const popcount = m => { let n = 0; while (m) { m &= m - 1; n++; } return n; };
+
+// mask 칸은 digits로 고정, 나머지 칸은 0~9 전부인 숫자들
+function cube(mask, digits) {
+  const free = [];
+  let base = 0;
+  for (let j = 0; j < 8; j++) {
+    if ((mask >> j) & 1) base += digits[j] * W[j];
+    else free.push(W[j]);
+  }
+  const n = 10 ** free.length, out = new Int32Array(n);
+  for (let idx = 0; idx < n; idx++) {
+    let v = base, x = idx;
+    for (let i = free.length - 1; i >= 0; i--) { v += (x % 10) * free[i]; x = Math.floor(x / 10); }
+    out[idx] = v;
+  }
+  return out;
+}
+
+// I에서 1~maxK칸을 바꾼 숫자 전부(중복 없이: 바뀐 칸은 I와 다른 숫자만)
+function neighborhood(I, maxK = 4) {
+  const parts = [Int32Array.of(I.reduce((v, d) => v * 10 + d, 0))];
+  for (let m = 1; m < 256; m++) {
+    const k = popcount(m);
+    if (k > maxK) continue;
+    const pos = [];
+    for (let j = 0; j < 8; j++) if ((m >> j) & 1) pos.push(j);
+    let base = 0;
+    for (let j = 0; j < 8; j++) if (!((m >> j) & 1)) base += I[j] * W[j];
+    const n = 9 ** k, out = new Int32Array(n);
+    for (let idx = 0; idx < n; idx++) {
+      let v = base, x = idx;
+      for (const j of pos) { const d = x % 9; x = Math.floor(x / 9); v += (d < I[j] ? d : d + 1) * W[j]; }
+      out[idx] = v;
+    }
+    parts.push(out);
+  }
+  return concat(parts);
+}
+
+// 정확히 다시 계산할 숫자들. pattern =
+//   { mask, digits }: mask 칸은 digits로 고정(회귀, 정해진 숫자 하나 등)
+//   { near }: near에서 1~4칸이 다른 숫자 전부(백투백)
+//   { key, p, not }: 성립 자리가 p칸인 다른 자리(not 제외) 어디든 key 숫자열이 놓인 숫자들(재현)
+function patternList(pat) {
+  if (pat.near) return neighborhood(pat.near);
+  if (pat.mask != null) return cube(pat.mask, pat.digits);
+  const parts = [];
+  for (let m = 1; m < 256; m++) {
+    if (m === pat.not || popcount(m) !== pat.p) continue;
+    const digits = new Int32Array(8);
+    let i = 0;
+    for (let j = 0; j < 8; j++) if ((m >> j) & 1) digits[j] = pat.key[i++];
+    parts.push(cube(m, digits));
+  }
+  return concat(parts);
+}
+
+// 결정적인 무작위 표본(평균 보정용)
+function rng(seed) {
+  let s = (seed >>> 0) || 1;
+  return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s; };
+}
+function sample(n, seed) {
+  const out = new Int32Array(n), next = rng(seed);
+  for (let i = 0; i < n; i++) out[i] = next() % 1e8;
+  return out;
+}
+
+// I에서 mask 칸을 무작위로 바꾼 숫자 n개
+function cubeSample(I, mask, n, seed) {
+  const out = new Int32Array(n), next = rng(seed);
+  let base = 0;
+  for (let j = 0; j < 8; j++) if (!((mask >> j) & 1)) base += I[j] * W[j];
+  for (let i = 0; i < n; i++) {
+    let v = base;
+    for (let j = 0; j < 8; j++) if ((mask >> j) & 1) v += (next() % 10) * W[j];
+    out[i] = v;
+  }
+  return out;
+}
+
+function concat(lists) {
+  let n = 0;
+  for (const l of lists) n += l.length;
+  const out = new (lists.length ? lists[0].constructor : Int32Array)(n);
+  let o = 0;
+  for (const l of lists) { out.set(l, o); o += l.length; }
+  return out;
+}
+
+// 정렬 후 중복 제거
+function unique(list) {
+  const a = Int32Array.from(list).sort();
+  let n = 0;
+  for (let i = 0; i < a.length; i++) if (i === 0 || a[i] !== a[i - 1]) a[n++] = a[i];
+  return a.subarray(0, n);
+}
+
+function split(list, parts) {
+  const out = [], size = Math.ceil(list.length / parts);
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  return out;
+}
+
+function mergePatch(results) {
+  const sumCtx = new Float64Array(512), cntCtx = new Float64Array(512);
+  for (const r of results) for (let id = 0; id < 512; id++) { sumCtx[id] += r.sumCtx[id]; cntCtx[id] += r.cntCtx[id]; }
+  return { sumCtx, cntCtx, diffs: results[0] && results[0].diffs ? concat(results.map(r => r.diffs)) : null };
+}
+
+module.exports = { popcount, cube, neighborhood, patternList, sample, cubeSample, concat, unique, split, mergePatch };
+
+};
 defs["worker"] = function (module, exports, require, __dirname, __filename) {
 'use strict';
 // 1억 개 숫자 구간을 훑는 워커.
@@ -1659,6 +1780,85 @@ function runBuild({ lo, hi, F0, validateDate }) {
 // q: { lo, hi, F0, T, groups: [그룹 이름], containsIds: [id]|null, dynamic: {date, history}, fams: [[id..]], ctx, bounds }
 function runQuery(q) {
   const F0 = new Float32Array(q.F0), T = new Float32Array(q.T);
+  const evaluate = q.fams.length > 0; // 계열이 없으면 F0 복사(+ adds)만
+  const { fns, score } = evaluate ? queryEvaluator(q) : { fns: [], score: null };
+  const r = c.r;
+  const sumCtx = new Float64Array(MAX_ID), cntCtx = new Float64Array(MAX_ID);
+  // windows = [a0, b0, a1, b1, …]: 값이 [a, b) 안인 숫자를 모아 돌려준다(나중에 정확히 다시 계산할 후보). candCap개를 넘으면 그만 모은다.
+  const win = q.windows || [], nw = win.length, cap = q.candCap || Infinity;
+  let cand = new Int32Array(1024), nc = 0, overflow = false;
+  // adds: 판정 없이 더하는 [스페셜] 점수. 직전 판보다 크면 gt, 작으면 lt, 숫자 d가 있으면 dig[d](앞자리 0 제외),
+  // 직전 판과 같은 칸이 n개면 same[n](백투백)
+  const ad = q.adds || null;
+  const digSum = new Float64Array(1024);
+  if (ad) for (let m = 0; m < 1024; m++) for (let d = 0; d < 10; d++) if ((m >> d) & 1) digSum[m] += ad.dig[d];
+  const anyDig = !!ad && ad.dig.some(x => x !== 0), anySame = !!ad && !!ad.same;
+  const sameHi = new Int8Array(10000), sameLo = new Int8Array(10000);
+  if (anySame) {
+    for (let x = 0; x < 10000; x++) {
+      for (let j = 0; j < 4; j++) {
+        const d = Math.floor(x / 10 ** (3 - j)) % 10;
+        if (d === ad.prev[j]) sameHi[x]++;
+        if (d === ad.prev[j + 4]) sameLo[x]++;
+      }
+    }
+  }
+
+  if (evaluate) startAt(q.lo);
+  for (let v = q.lo; v < q.hi; v++) {
+    let s = 0;
+    if (evaluate) {
+      if (v !== q.lo) step();
+      c.v = v;
+      R.features(c);
+      for (let g = 0; g < fns.length; g++) fns[g](c, mk);
+      s = score(r, mk, v, sumCtx, cntCtx);
+    }
+    if (ad) {
+      if (v > ad.pv) s += ad.gt;
+      else if (v < ad.pv) s += ad.lt;
+      const h = (v / 1e4) | 0, l = v - h * 1e4;
+      if (anyDig) s += digSum[h ? DIGITS_NL[h] | DIGITS_4[l] : DIGITS_NL[l]];
+      if (anySame) s += ad.same[sameHi[h] + sameLo[l]];
+    }
+    const x = Math.fround(F0[v] + s);
+    T[v] = x;
+    for (let w = 0; w < nw; w += 2) {
+      if (x >= win[w] && x < win[w + 1]) {
+        if (nc >= cap) { overflow = true; break; }
+        if (nc === cand.length) { const b = new Int32Array(nc * 2); b.set(cand); cand = b; }
+        cand[nc++] = v;
+        break;
+      }
+    }
+  }
+  return { sumCtx, cntCtx, cand: cand.slice(0, nc), overflow };
+}
+
+// 0~9999의 숫자 집합(비트 d = 숫자 d가 있음): 앞자리 0 제외 / 4자리로 채워 앞자리 0 포함
+const DIGITS_NL = new Int32Array(10000), DIGITS_4 = new Int32Array(10000);
+for (let x = 0; x < 10000; x++) {
+  let m = 0;
+  for (let y = x; ; y = (y / 10) | 0) { m |= 1 << (y % 10); if (y < 10) break; }
+  DIGITS_NL[x] = m;
+  DIGITS_4[x] = m | (x < 1000 ? 1 : 0);
+}
+
+// 질의 q(그룹·계열·직전 판 문맥)에 맞춘 판정 함수들과 점수 함수.
+// 직전 판이 달성한 업적(U)이 있는 계열만 다시 계산한다. 날짜·[스페셜] 업적은 F0에 없으므로 그 계열은 항상 계산.
+// q.evalKey가 같으면 만든 함수를 다시 쓴다(새로 만든 함수는 JIT 최적화 전이라 작은 작업에서 느림).
+let evalCache = null;
+function queryEvaluator(q) {
+  if (q.evalKey && evalCache && evalCache.key === q.evalKey) {
+    for (const g of evalCache.groups) if (g.init) g.init(mk);
+    for (const [id, b] of Object.entries(q.bounds)) { A.mn[id] = b.min; A.mx[id] = b.max; A.lo[id] = b.lower; A.up[id] = b.upper; }
+    return evalCache.ev;
+  }
+  const ev = buildEvaluator(q);
+  if (q.evalKey) evalCache = { key: q.evalKey, ...ev };
+  return ev.ev;
+}
+function buildEvaluator(q) {
   const byName = new Map(statics.map(g => [g.name, g]));
   const groups = q.groups.filter(n => n !== 'contains').map(n => byName.get(n));
   if (q.containsIds && q.containsIds.length) {
@@ -1671,23 +1871,43 @@ function runQuery(q) {
     groups.push(R.historyGroup({ ...h, prev: Int32Array.from(h.prev), streaks: h.streaks && Int32Array.from(h.streaks) }, meta.defs));
   }
   for (const g of groups) if (g.init) g.init(mk);
-  const fns = groups.map(g => g.fn);
   for (const [id, b] of Object.entries(q.bounds)) { A.mn[id] = b.min; A.mx[id] = b.max; A.lo[id] = b.lower; A.up[id] = b.upper; }
-  // 직전 판이 달성한 업적(U)이 있는 계열만 다시 계산한다. 날짜·[스페셜] 업적은 F0에 없으므로 그 계열은 항상 계산.
-  const prevValue = q.dynamic.history ? q.dynamic.history.prevValue : -1;
-  const score = compileScorer(A, meta, q.fams, q.ctx.pk, q.ctx.pm, R.WINDOW_IDS, prevValue);
-  const r = c.r;
-  const sumCtx = new Float64Array(MAX_ID), cntCtx = new Float64Array(MAX_ID);
+  const prevValue = q.prevValue != null ? q.prevValue : q.dynamic.history ? q.dynamic.history.prevValue : -1;
+  return { groups, ev: { fns: groups.map(g => g.fn), score: compileScorer(A, meta, q.fams, q.ctx.pk, q.ctx.pm, R.WINDOW_IDS, prevValue) } };
+}
 
-  startAt(q.lo);
-  for (let v = q.lo; v < q.hi; v++) {
-    if (v !== q.lo) step();
+// 목록의 숫자만 정확히(전체 질의 q로) 다시 계산해 T에 쓴다.
+//   accumulate: 업적별 문맥 점수 합을 돌려준다(무작위 표본으로 평균 문맥 점수를 잴 때)
+//   probe: T에 쓰지 않고 원래 T 값과의 차이만 돌려준다(기댓값 보정용)
+function runPatch(q) {
+  const F0 = new Float32Array(q.F0), T = new Float32Array(q.T);
+  const { fns, score } = queryEvaluator(q);
+  const r = c.r, list = q.list;
+  const sumCtx = new Float64Array(MAX_ID), cntCtx = new Float64Array(MAX_ID);
+  const diffs = q.probe ? new Float64Array(list.length) : null;
+  for (let i = 0; i < list.length; i++) {
+    const v = list[i];
+    startAt(v);
     c.v = v;
     R.features(c);
     for (let g = 0; g < fns.length; g++) fns[g](c, mk);
-    T[v] = F0[v] + score(r, mk, v, sumCtx, cntCtx);
+    const x = Math.fround(F0[v] + score(r, mk, v, sumCtx, cntCtx));
+    if (diffs) diffs[i] = x - T[v];
+    else T[v] = x;
   }
-  return { sumCtx, cntCtx };
+  if (!q.accumulate) { sumCtx.fill(0); cntCtx.fill(0); }
+  return { sumCtx, cntCtx, diffs };
+}
+
+// T에서 값이 windows 구간 안인 숫자 찾기(목표 점수를 바꿨을 때 후보 다시 모으기)
+function runScan({ lo, hi, T: buf, windows }) {
+  const T = new Float32Array(buf), nw = windows.length;
+  const out = [];
+  for (let v = lo; v < hi; v++) {
+    const x = T[v];
+    for (let w = 0; w < nw; w += 2) if (x >= windows[w] && x < windows[w + 1]) { out.push(v); break; }
+  }
+  return { cand: Int32Array.from(out) };
 }
 
 // 새 업적 조사: 성립 개수·최솟값·최댓값, Σ0.19^(성립 자리 수)(회귀 확률 추정용), 성립 숫자열 분포(승부사 확률용)
@@ -1821,14 +2041,15 @@ function runHeart(q) {
   return { sum };
 }
 
-return { runBuild, runQuery, runHeart, runProbe, runRare };
+return { runBuild, runQuery, runPatch, runScan, runHeart, runProbe, runRare };
 }
 
 if (!isMainThread && parentPort) {
   const sweeper = createSweeper(workerData.dataFile, workerData.tables);
   parentPort.on('message', msg => {
     try {
-      const res = msg.task === 'build' ? sweeper.runBuild(msg) : msg.task === 'heart' ? sweeper.runHeart(msg) : msg.task === 'probe' ? sweeper.runProbe(msg) : msg.task === 'rare' ? sweeper.runRare(msg) : sweeper.runQuery(msg);
+      const run = { build: sweeper.runBuild, heart: sweeper.runHeart, probe: sweeper.runProbe, rare: sweeper.runRare, patch: sweeper.runPatch, scan: sweeper.runScan }[msg.task] || sweeper.runQuery;
+      const res = run(msg);
       parentPort.postMessage({ id: msg.id, ok: true, res });
     } catch (e) {
       parentPort.postMessage({ id: msg.id, ok: false, error: e.stack || String(e) });
@@ -1848,8 +2069,21 @@ const R = require('./rules');
 const S = require('./score');
 const { containsBounds } = require('./digitdp');
 const { subsetReduce, subsetMaxCount, subsetLevels } = require('./transform');
+const P = require('./patchplan');
 
 const DEFAULT_TARGETS = [1e8, 1e9, 1e10, 1e11]; // 1억·10억·100억·1000억
+
+// 빠른 직전 판 점수표(Helper.splitQuery 참고)
+const FAST_BOUND = 0.9;   // 훑지 않는 계열의 점수 차이 합 상한 = 가장 낮은 목표 점수 × 이 값
+const ENUM_MAX = 1e6;     // 큰 점수(회귀·재현)가 이 개수 이하의 정해진 숫자에서만 나면 그 숫자들을 직접 계산
+const ENUM_BUDGET = 3e6;  // 직접 계산할 숫자 목록 크기 합 상한(점수가 큰 것부터)
+const ENUM_MIN = 1e5;     // 그보다 작은 점수는 그냥 상한에 넣는다
+const SAMPLE_N = 100000;  // 업적별 평균 문맥 점수(강심장 보정용)를 재는 무작위 표본
+const EV_SAMPLES = 8000;  // 5칸 이상 리롤 조합마다 기댓값 보정용 무작위 결과 수
+const SE_MAX = 20000;     // 표본 보정의 오차(대략 점수 × √(성립 비율 / 표본 수))가 이보다 큰 계열은 기댓값을 위해 훑는다
+const PATCH_MAX = 5e6;    // 다시 계산할 숫자가 이보다 많으면 1억 개를 모두 훑는다
+const choose = (n, k) => { let x = 1; for (let i = 0; i < k; i++) x = (x * (n - i)) / (i + 1); return x; };
+const windowsOf = (targets, f) => targets.flatMap(t => [t - f.B - (t * 1e-6 + 1), t - f.lo + (t * 1e-6 + 1)]);
 
 function kstToday() {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -1898,8 +2132,12 @@ function travelBounds(today) {
 
 class Helper {
   // engine: { tables, query(q) }. meta/stats를 넘기지 않으면 data/ 파일에서 읽는다(Node).
-  constructor(engine, { meta, stats } = {}) {
+  // fast=false면 직전 판 점수표를 항상 1억 개 전부 다시 계산한다(검증용).
+  constructor(engine, { meta, stats, fast = true } = {}) {
     this.engine = engine;
+    this.fast = fast;
+    this.targets = DEFAULT_TARGETS;
+    this.winSet = new Set(R.WINDOW_IDS);
     this.meta = meta || loadMeta();
     this.A = S.scoreArrays(this.meta);
     this.stats = stats || JSON.parse(require('fs').readFileSync(require('./engine').STATS_FILE, 'utf8'));
@@ -1931,6 +2169,14 @@ class Helper {
     if (!state.prev) return null;
     const prev = parseRoll(state.prev);
     return { prev: Array.from(prev), prevValue: rollValue(prev), asc: state.asc || 1, desc: state.desc || 1, streaks: state.streaks || null };
+  }
+
+  // 이번 판에 나올 수 있는 [스페셜] 업적인지(상승·하락은 이어진 횟수, 숫자별 연속은 목표 횟수에 닿는 것만)
+  historyCan(h, id) {
+    if (id >= 246 && id <= 254) return id - 242 <= h.asc + 1;
+    if (id >= 263 && id <= 271) return id - 259 <= h.desc + 1;
+    if (id >= 436 && id <= 485) { const d = this.meta.defs[id]; return !!h.streaks && h.streaks[d.digit] + 1 === d.threshold; }
+    return true;
   }
 
   // 한 숫자의 모든 업적 판정 → mk
@@ -1983,7 +2229,18 @@ class Helper {
     const meta = this.meta;
     const famSet = new Set(U.map(id => meta.famIndex[id]));
     for (const id of meta.live) if (meta.isDate[id] || (hist && meta.isHistory[id])) famSet.add(meta.famIndex[id]);
-    const fams = [...famSet].map(fi => meta.families[fi].filter(id => hist || !meta.isHistory[id]));
+    const fams = [...famSet].map(fi => meta.families[fi].filter(id => !meta.isHistory[id] || (hist && this.historyCan(hist, id)))).filter(f => f.length);
+    const q = {
+      ...this.groupsOf(fams), fams, bounds,
+      dynamic: { date: ymd, history: hist },
+      ctx: { pk: Array.from(X.pk), pm: Array.from(X.pm) },
+      evalKey: this.stateKey(state, ymd), // 워커가 만든 판정·점수 함수를 다시 쓰는 열쇠
+    };
+    return { ymd, bounds, hist, X, U, q };
+  }
+
+  // 계열들을 판정하는 데 필요한 그룹
+  groupsOf(fams) {
     const groups = new Set(), containsIds = [];
     for (const f of fams) for (const id of f) {
       const g = this.owner.get(id);
@@ -1991,27 +2248,190 @@ class Helper {
       if (g === 'contains') containsIds.push(id);
       else groups.add(g);
     }
-    const q = {
-      groups: [...groups], containsIds, fams, bounds,
-      dynamic: { date: ymd, history: hist },
-      ctx: { pk: Array.from(X.pk), pm: Array.from(X.pm) },
+    return { groups: [...groups], containsIds };
+  }
+
+  // 빠른 직전 판 점수표: F0에 더해지는 점수 차이를 계열마다 셋 중 하나로 처리한다.
+  //  sweep: 1억 개를 모두 다시 판정한다. 점수 차이가 크면서 어느 숫자에서 생길지 미리 알 수 없는 계열(큰 동형·연쇄 등).
+  //  adds: 판정 없이 바로 더한다. 상승·하락(직전 판보다 큰지/작은지), 숫자별 연속(그 숫자가 있는지).
+  //  bounded: 점수 차이가 숫자마다 [lo, hi] 안인 계열. 이런 계열 hi의 합 B가 작으면, 훑은 점수가 목표 점수 바로 아래(B 이내)인
+  //           숫자만 정확히 다시 계산해도 목표 점수를 넘는지는 모든 숫자에서 정확하다.
+  //           큰 점수가 정해진 몇 숫자에서만 나는 경우(회귀: 직전 판과 같은 자리에 같은 숫자, 성립 자리가 많은 업적의 재현,
+  //           백투백: 직전 판과 4칸 이상 같음, 날짜 업적의 태초·극한 등)는 그 숫자들을 직접 계산한다(patterns).
+  splitQuery(q, X, prevRaw, hist, ymd, targets) {
+    const A = this.A, meta = this.meta, cap = FAST_BOUND * Math.min(...targets);
+    const sweep = [], bounded = [], fams = [];
+    const rate = id => (meta.isDate[id] ? (q.bounds[id] ? q.bounds[id].count : 1) : this.stats.count[id] || 0) / 1e8; // 성립 비율
+    const adds = { pv: hist ? hist.prevValue : -1, prev: prevRaw ? Array.from(prevRaw) : null, gt: 0, lt: 0, dig: new Array(10).fill(0), same: null };
+    const one = v => ({ mask: 255, digits: parseRoll(String(v)) });
+    const inRange = (f, a, b) => f.every(id => id >= a && id <= b);
+    for (const f of q.fams) {
+      if (f.some(id => meta.isHistory[id])) {
+        const spec = Math.max(...f.map(id => A.spec[id]));
+        if (!f.every(id => meta.isHistory[id]) || spec !== spec) sweep.push(f);
+        else if (inRange(f, 246, 254)) adds.gt = spec; // 남은 업적(이어진 횟수 이하)이 직전 판보다 크면 모두 성립
+        else if (inRange(f, 263, 271)) adds.lt = spec;
+        else if (inRange(f, 436, 485) && f.length === 1) adds.dig[meta.defs[f[0]].digit] = spec;
+        else if (inRange(f, 241, 245)) adds.same = Array.from({ length: 9 }, (_, n) => Math.max(0, ...f.filter(id => id - 237 <= n).map(id => A.spec[id]))); // 같은 칸이 id-237개 이상
+        else if (inRange(f, 486, 492)) {
+          const pats = [];
+          for (const id of f) for (const v of [hist.prevValue + meta.defs[id].difference, hist.prevValue - meta.defs[id].difference]) if (v >= 0 && v < 1e8) pats.push(one(v));
+          bounded.push({ f, hi: 0, lo: 0, pats });
+        } else sweep.push(f);
+        continue;
+      }
+      // 날짜 업적은 F0에 없으므로 점수 전체가 차이. 태초·극한(최솟값·최댓값)과 #65(오늘 날짜)는 그 숫자만 직접 계산.
+      // 직전 판도 날짜 업적을 달성했으면 아래에서 관계 접두사(회귀·재현 등)도 함께 본다.
+      if (f.some(id => meta.isDate[id]) && !f.every(id => meta.isDate[id])) { sweep.push(f); continue; }
+      const fam = { f, top: [], lo: 0, pats: [], rels: [] };
+      for (const id of f) {
+        if (!meta.isDate[id]) continue;
+        if (id === 65) { fam.pats.push(one(+ymd)); continue; }
+        let top = 0;
+        for (const x of [A.base[id], A.dawn[id], A.peak[id]]) if (x === x && x > top) top = x;
+        fam.top.push([top, rate(id)]);
+        for (const v of [A.mn[id], A.mx[id]]) if (v === v) fam.pats.push(one(v));
+      }
+      for (const id of f) {
+        if (X.pk[id] < 0 || id === 65) continue; // #65는 오늘 날짜 하나뿐이라 위에서 직접 계산
+        const pm = X.pm[id], p = P.popcount(pm), r = rate(id);
+        const pick = x => (x === x ? x : A.chain[id]); // 관계 접두사가 없으면 연쇄
+        // [점수, 그 점수가 날 수 있는 숫자 목록(없으면 null), 목록 크기, 대략적인 비율]
+        if (this.winSet.has(id)) {
+          fam.rels.push([pick(A.reg[id]), { mask: pm, digits: prevRaw }, 10 ** (8 - p), r * 10 ** -p]);
+          if (p < 8) {
+            const key = [];
+            for (let j = 0; j < 8; j++) if ((pm >> j) & 1) key.push(prevRaw[j]);
+            fam.rels.push([pick(A.jae[id]), { key, p, not: pm }, (choose(8, p) - 1) * 10 ** (8 - p), r]);
+          }
+          fam.rels.push([pick(A.dong[id]), null, 0, r]);
+        } else {
+          // 성립 자리 = 숫자 전체: 같은 자리·같은 숫자는 직전 판과 같은 수뿐, 재현은 없음
+          fam.rels.push([pick(A.reg[id]), { mask: 255, digits: prevRaw }, 1, 0]);
+          fam.rels.push([pick(A.dong[id]), null, 0, r]);
+        }
+        fam.rels.push([A.chain[id], null, 0, r]);
+        for (const [t] of fam.rels) if (t === t && A.base[id] === A.base[id] && t - A.base[id] < fam.lo) fam.lo = t - A.base[id];
+      }
+      fams.push(fam);
+    }
+    // 직접 계산할 목록: 점수가 큰 것부터, 목록 크기 합이 ENUM_BUDGET 안에서
+    const cands = fams.flatMap(x => x.rels).filter(([t, pat, size]) => t === t && pat && t > ENUM_MIN && size <= ENUM_MAX).sort((x, y) => y[0] - x[0]);
+    let budget = ENUM_BUDGET;
+    const enumed = new Set();
+    for (const r of cands) if (r[2] <= budget) { enumed.add(r); budget -= r[2]; }
+    for (const x of fams) {
+      // 직접 계산하지 않는 관계는 상한(hi)에 넣는다. 표본 보정의 오차(점수 × √(비율 / 표본 수))가 크면 기댓값을 위해 훑는다.
+      let hi = 0, se = 0;
+      const pats = x.pats.slice();
+      for (const [t, r] of x.top) { hi = Math.max(hi, t); se += t * Math.sqrt(r / EV_SAMPLES); }
+      for (const rel of x.rels) {
+        const [t, pat, , r] = rel;
+        if (t !== t) continue;
+        if (enumed.has(rel)) { pats.push(pat); continue; }
+        hi = Math.max(hi, t);
+        se += t * Math.sqrt(r / EV_SAMPLES);
+      }
+      if (se > SE_MAX) sweep.push(x.f);
+      else bounded.push({ f: x.f, hi, lo: x.lo, pats });
+    }
+    bounded.sort((a, b) => a.hi - b.hi);
+    let B = 0, lo = 0, boundedU = 0;
+    const patterns = new Map();
+    for (const x of bounded) {
+      if (B + x.hi > cap) { sweep.push(x.f); continue; }
+      B += x.hi;
+      lo += x.lo;
+      if (x.f.some(id => X.pk[id] >= 0)) boundedU++;
+      for (const pat of x.pats) patterns.set(JSON.stringify(pat), pat);
+    }
+    const has = pred => sweep.some(f => f.some(pred));
+    const anyAdd = adds.gt || adds.lt || adds.same || adds.dig.some(x => x);
+    const sweepQ = {
+      ...q, ...this.groupsOf(sweep), fams: sweep, prevValue: adds.pv, adds: anyAdd ? adds : null, evalKey: q.evalKey + '|sweep|' + targets.join(','),
+      dynamic: { date: has(id => meta.isDate[id]) ? q.dynamic.date : null, history: has(id => meta.isHistory[id]) ? q.dynamic.history : null },
     };
-    return { ymd, bounds, hist, X, U, q };
+    return { sweepQ, B, lo, patterns: [...patterns.values()], swept: sweep.length, boundedU, targetsKey: targets.join(',') };
   }
 
   // 직전 판 문맥으로 점수표 T를 만든다(1억 개). 같은 문맥이면 재사용.
   prepare(state) {
     const key = this.stateKey(state, state.date || kstToday());
-    this.preparing = this.preparing.catch(() => {}).then(async () => {
+    if (state.targets) this.targets = state.targets.slice().sort((a, b) => a - b);
+    return this.serial(async () => {
       if (this.prepared && this.prepared.key === key) return this.prepared;
       const t0 = Date.now();
       const { ymd, bounds, hist, X, U, q } = this.buildQuery(state);
       this.prepared = null;
-      const res = await this.engine.query(q);
-      this.prepared = { key, ymd, X, U, hist, bounds, ...res, ms: Date.now() - t0, groups: q.groups.length };
+      const targets = this.targets;
+      const split = this.fast ? this.splitQuery(q, X, state.prev ? parseRoll(state.prev) : null, hist, ymd, targets) : null;
+      let res = null, fast = null;
+      if (split) {
+        res = await this.engine.query({ ...split.sweepQ, windows: windowsOf(targets, split), candCap: PATCH_MAX / 8 });
+        if (!res.overflow) fast = await this.patchBounded(q, split, res, state);
+      }
+      if (!fast) res = await this.engine.query(q);
+      this.prepared = { key, ymd, X, U, hist, bounds, q, ...res, ...(fast ? fast.ctx : {}), fast, ms: Date.now() - t0, groups: (fast ? split.sweepQ : q).groups.length };
       return this.prepared;
     });
+  }
+
+  // T를 바꾸는 작업은 하나씩 차례로
+  serial(fn) {
+    this.preparing = this.preparing.catch(() => {}).then(fn);
     return this.preparing;
+  }
+
+  // 훑지 않은 계열 반영: 회귀·재현이 나올 수 있는 숫자와 목표 점수 근처 후보를 정확히 다시 계산
+  async patchBounded(q, split, res, state) {
+    const list = P.unique(P.concat([res.cand, ...split.patterns.map(P.patternList)]));
+    if (list.length > PATCH_MAX) return null;
+    await this.engine.patch(q, list);
+    // 업적별 평균 문맥 점수: 훑은 계열은 정확한 합, 나머지는 무작위 표본에서
+    const sumCtx = Float64Array.from(res.sumCtx), cntCtx = Float64Array.from(res.cntCtx);
+    if (split.boundedU) {
+      const sp = await this.engine.patch(q, P.sample(SAMPLE_N, rollValue(parseRoll(state.prev)) + 1), { accumulate: true });
+      for (let id = 0; id < MAX_ID; id++) if (!cntCtx[id]) { sumCtx[id] = sp.sumCtx[id]; cntCtx[id] = sp.cntCtx[id]; }
+    }
+    return {
+      B: split.B, lo: split.lo, swept: split.swept, patched: list.length, targetsKey: split.targetsKey,
+      near: new Map(), ctx: { sumCtx, cntCtx },
+    };
+  }
+
+  // 분석 직전(빠른 점수표일 때):
+  //  - 목표 점수가 바뀌었으면 새 목표 점수 근처 후보를 정확히 다시 계산
+  //  - 이번 숫자에서 1~4칸 리롤로 나오는 숫자(약 50만 개)를 정확히 다시 계산 → 대박 노리기·1~4칸 기댓값이 정확
+  //  - 5칸 이상 리롤 조합은 무작위 결과로 훑지 않은 계열의 점수 차이 평균을 재서 기댓값을 보정(참고용이라 근사)
+  // 돌려주는 값: 칸 조합별 기댓값 보정
+  refine(prepared, I) {
+    if (!prepared.fast) return Promise.resolve(null);
+    return this.serial(async () => {
+      const f = prepared.fast;
+      if (!f || this.prepared !== prepared) return null;
+      const tk = this.targets.join(',');
+      if (f.targetsKey !== tk) {
+        const cand = await this.engine.scan(windowsOf(this.targets, f));
+        if (cand.length > PATCH_MAX) {
+          Object.assign(prepared, await this.engine.query(prepared.q), { fast: null });
+          return null;
+        }
+        await this.engine.patch(prepared.q, cand);
+        f.targetsKey = tk;
+      }
+      const ik = I.join('');
+      if (!f.near.has(ik)) {
+        await this.engine.patch(prepared.q, P.unique(P.neighborhood(I)));
+        const masks = [];
+        for (let m = 1; m < 256; m++) if (P.popcount(m) >= 5) masks.push(m);
+        const seed = rollValue(I) * 7 + 1;
+        const { diffs } = await this.engine.patch(prepared.q, P.concat(masks.map(m => P.cubeSample(I, m, EV_SAMPLES, seed + m))), { probe: true });
+        const corr = new Float64Array(256);
+        masks.forEach((m, i) => { let s = 0; for (let k = i * EV_SAMPLES; k < (i + 1) * EV_SAMPLES; k++) s += diffs[k]; corr[m] = s / EV_SAMPLES; });
+        f.near.set(ik, corr);
+      }
+      return f.near.get(ik);
+    });
   }
 
   // 화면용 내역: 업적별 최고 접두사와 점수, 계열 최댓값만 합산
@@ -2169,12 +2589,14 @@ class Helper {
   async analyze(I, state) {
     const prepared = await this.prepare(state);
     const t0 = Date.now();
+    const evCorr = await this.refine(prepared, I);
     const { ymd, X, hist } = prepared;
     this.applyBounds(prepared.bounds);
     const keepCtx = { ...X, noReroll: true };
     const keep = this.breakdown(I, ymd, hist, keepCtx);
     const T = prepared.T;
     const ev = subsetReduce(T, I, 'mean');
+    if (evCorr) for (let m = 1; m < 256; m++) ev[m] += evCorr[m];
     const { max: best, count: bestCount } = subsetMaxCount(T, I);
     const heartList = this.heartItems(I, ymd, prepared);
     const heart = this.heartBonus(heartList);
@@ -2182,7 +2604,7 @@ class Helper {
     const options = [];
     for (let m = 1; m < 256; m++) options.push({ mask: m, ev: ev[m], max: best[m], pMax: bestCount[m] / 10 ** popcount(m) });
     const jackpots = this.jackpots(T, I, options, prepared);
-    const goals = this.goals(T, I, state.targets || DEFAULT_TARGETS, keep.total, heartList);
+    const goals = this.goals(T, I, this.targets, keep.total, heartList);
     const rare = await this.rare(I, prepared, state.rareTier == null ? 5 : state.rareTier);
     options.sort((a, b) => b.ev - a.ev);
     return { I, keep, options, jackpots, goals, rare, heart, prepared, ms: Date.now() - t0 };

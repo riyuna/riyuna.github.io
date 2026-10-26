@@ -5,6 +5,7 @@
 (function (g) {
   const { chunks, mergeBuild, mergeQuery, statsFromBuild, rareTasks, mergeCounts } = RandleCore.require('sweepplan');
   const { buildMeta } = RandleCore.require('meta');
+  const P = RandleCore.require('patchplan');
   const N = 1e8;
   const F0_PIECE = 25e6; // IndexedDB에 나눠 저장할 바이트 단위
   const SAVED_KEY = 'randle-cache-saved'; // 마지막으로 저장에 성공한 캐시 키(지워졌는지 구분용)
@@ -188,7 +189,19 @@
       report();
       const results = await Promise.all(parts.map(([lo, hi]) =>
         this.pool.run({ task: 'query', lo, hi, F0: this.F0, T: this.T, ...q }).then(r => { done++; report(); return r; })));
-      return { T: new Float32Array(this.T), ...mergeQuery(results) };
+      return { T: new Float32Array(this.T), ...mergeQuery(results), cand: P.concat(results.map(r => r.cand)), overflow: results.some(r => r.overflow) };
+    }
+
+    // list의 숫자만 전체 질의 q로 정확히 다시 계산(T에 씀). opts: { accumulate, probe } — lib/worker.js runPatch 참고
+    async patch(q, list, opts = {}) {
+      const parts = P.split(list, this.nWorkers * 2);
+      const results = await Promise.all(parts.map(part => this.pool.run({ task: 'patch', ...q, ...opts, list: part, F0: this.F0, T: this.T })));
+      return P.mergePatch(results);
+    }
+
+    async scan(windows) {
+      const results = await Promise.all(chunks().map(([lo, hi]) => this.pool.run({ task: 'scan', lo, hi, T: this.T, windows })));
+      return P.concat(results.map(r => r.cand));
     }
 
     async rare(q) {
